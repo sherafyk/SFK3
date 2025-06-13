@@ -8,6 +8,8 @@ A simple web app for uploading field document images and extracting arrival and 
 - Images stored with UTC timestamp names
 - Calls OpenAI Vision API (`o4-mini` by default)
 - Shows markdown and rendered table output
+- Copy or download markdown results
+- Edit the prompt and retry extraction
 - Stores request logs in SQLite
 - Rate limited to 50 uploads/hour per IP
 
@@ -27,6 +29,28 @@ cp .env.example .env
 docker-compose up -d --build
 ```
 3. Visit `http://localhost:5000` and login with the password.
+
+## Structure
+
+```
+.
+├── backend/
+│   ├── app.py
+│   ├── models.py
+│   ├── utils.py
+│   └── ...
+├── frontend/
+│   ├── index.html
+│   ├── upload.html
+│   ├── result.html
+│   ├── main.js
+│   └── style.css
+```
+
+## Usage
+1. Drag and drop or select one or more image files (png/jpg/webp ≤8MB).
+2. After processing, copy or download the markdown tables.
+3. If the output needs tweaking, edit the prompt and hit **Edit & Retry**.
 
 ## Testing
 Install dependencies and run pytest:

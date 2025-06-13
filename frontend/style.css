@@ -1,0 +1,8 @@
+body { font-family: Arial, sans-serif; margin:40px; }
+#drop-area { border:2px dashed #ccc; padding:20px; }
+.thumb { width:100px; margin:5px; }
+pre { background:#f2f2f2; padding:10px; }
+table { border-collapse:collapse; margin-bottom:20px; }
+th, td { border:1px solid #ccc; padding:4px 8px; }
+form.login { display:flex; flex-direction:column; align-items:center; background:#fff; padding:20px; border-radius:5px; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+body.login-page { display:flex; justify-content:center; align-items:center; height:100vh; background:#f2f2f2; }

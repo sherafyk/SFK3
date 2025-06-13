@@ -1,3 +1,7 @@
 __pycache__/
 .env
 app/data/
+data/
+backend/requests.db
+backend/*.db
+backend/__pycache__/

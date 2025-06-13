@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <a href="{{ url_for('upload') }}">Back</a>
+    {% for r in results %}
+    <h3>{{ r.filename }} - {{ r.job_id }}</h3>
+    <pre id="md{{ loop.index }}">{{ r.output }}</pre>
+    <button onclick="copy({{ loop.index }})">Copy Markdown</button>
+    <button onclick="download({{ loop.index }})">Download Markdown</button>
+    <form method="post" action="{{ url_for('retry', filename=r.filename) }}">
+        <textarea name="prompt" rows="6" cols="80">{{ r.prompt }}</textarea><br>
+        <button type="submit">Edit & Retry</button>
+    </form>
+    <div>{{ r.html | safe }}</div>
+    <hr>
+    {% endfor %}
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>
