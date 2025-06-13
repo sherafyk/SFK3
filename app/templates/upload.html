@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Upload</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin:40px; }
+        #drop-area { border:2px dashed #ccc; padding:20px; }
+        .thumb { width:100px; margin:5px; }
+    </style>
+</head>
+<body>
+    <h2>Upload Images</h2>
+    <a href="{{ url_for('logout') }}">Logout</a>
+    <div id="drop-area">Drop images here</div>
+    <form id="form" method="post" enctype="multipart/form-data">
+        <input id="fileElem" type="file" name="files" accept="image/*" multiple style="display:none"/>
+        <button type="button" onclick="document.getElementById('fileElem').click()">Select Files</button>
+        <div id="gallery"></div>
+        <button type="submit">Upload</button>
+    </form>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}<div>{{ messages[0] }}</div>{% endif %}
+    {% endwith %}
+<script>
+let dropArea = document.getElementById('drop-area');
+let fileElem = document.getElementById('fileElem');
+let gallery = document.getElementById('gallery');
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+  dropArea.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults (e) { e.preventDefault(); e.stopPropagation(); }
+
+dropArea.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+  let dt = e.dataTransfer;
+  let files = dt.files;
+  fileElem.files = files;
+  previewFiles(files);
+}
+
+fileElem.addEventListener('change', () => previewFiles(fileElem.files));
+
+function previewFiles(files) {
+  gallery.innerHTML = '';
+  [...files].forEach(file => {
+    let img = document.createElement('img');
+    img.classList.add('thumb');
+    img.src = URL.createObjectURL(file);
+    gallery.appendChild(img);
+  });
+}
+</script>
+</body>
+</html>
