@@ -19,6 +19,9 @@ git clone https://github.com/sherafyk/SFK3.git
 cd SFK3
 ```
 1. Copy `.env.example` to `.env` and update values.
+```
+cp .env.example .env
+```
 2. Build and run with Docker:
 ```bash
 docker-compose up -d --build
