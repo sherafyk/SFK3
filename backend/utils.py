@@ -30,15 +30,34 @@ def save_file(file):
 
 def generate_prompt() -> str:
     return (
-        "Please analyze the attached image and extract the tank data as two separate tables, in markdown format:\n"
+        "Please analyze the attached image and extract the tank data as five separate tables, in markdown format:\n"
         "- The first table should show arrival conditions.\n"
         "- The second table should show departure conditions.\n"
         "\n"
-        "Each table should list all individual tanks and use the following columns (with these exact headers):\n"
+        "The first and second table should list all individual tanks and use the following columns (with these exact headers):\n"
         "| Tank | Product Name | API | Ullage (Ft) | Ullage (in) | Temp (°F) | Water (Bbls) | Gross Bbls | Net Bbls | Metric Tons |\n"
         "| ---- | ------------ | --- | ----------- | ----------- | --------- | ------------ | ---------- | -------- | ----------- |\n"
+        "\n"
+        "- The third table should show products discharged totals, typically found at the bottom of the document.\n"
+        "\n"
+        "The third table should list all individual products and use the following columns (with these exact headers):\n"
+        "| Product Discharged | API | Gross Bbls | Net Bbls | Metric Tons |\n"
+        "| ------------------ | --- | ---------- | -------- | ----------- |\n"
+        "\n"
+        "- The fourth table should show the date and time log, typically found near the top right of the document.\n"
+        "\n"
+        "The fourth table should list all individual events and use the following columns (with these exact headers):\n"
+        "| Event | Date | Time |\n"
+        "| ----- | ---- | ---- |\n"
+        "\n"
+        "- The fifth table should show the arrival and departure drafts in decimal format, typically found on the right side of the document.\n"
+        "\n"
+        "The fifth table should combine and list the arrival and departure drafts, converting to decimal format if needed, using the following columns (with these exact headers):\n"
+        "| Arrival/Departure | Fwd/Aft | Port | Stbd. |\n"
+        "| ----------------- | ------- | ---- | ----- |\n"
+        "\n"
         "\nIf a value is missing or unclear, leave the cell blank.\n"
-        "Output only the two markdown tables: one for arrival, one for departure.\n"
+        "Output only the five markdown tables: 1) Arrival Tank Values, 2) Departure Tank Values, 3) Products Discharged, 4) Time Log, 5) Draft Readings.\n"
     )
 
 
