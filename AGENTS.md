@@ -9,25 +9,52 @@ Outputs are shown in markdown and rendered table format, with full audit and use
 
 ```mermaid
 flowchart TD
-    A[User visits web page] --> B{Is user authenticated - Password API2025}
-    B -- No --> C[Show login form]
-    B -- Yes --> D[Show upload UI - Drag and drop or file picker]
-    D --> E{Upload one or more images}
+    subgraph Frontend
+        A[User visits page]
+        B{Authenticated?}
+        C[Show login form]
+        D[Show upload UI]
+        E{Upload images?}
+        F[Preview & validate<br>png/jpg/webp, ≤8MB]
+        G{Files valid?}
+    end
+
+    subgraph Backend
+        H[Store images<br>timestamp format]
+        I[Log request]
+        J{Rate limit OK?}
+        K[Call OpenAI Vision API]
+        L{API returns tables?}
+        M[Show error]
+        N[Store result<br>timestamp & job ID]
+    end
+
+    subgraph Output
+        O[Show markdown & rendered tables]
+        P[Copy, download, edit, retry]
+    end
+
+    %% Flow connections
+    A --> B
+    B -- No --> C
+    B -- Yes --> D
+    D --> E
     E -- No --> D
-    E -- Yes --> F[Preview thumbnails - Validate files png, jpg, webp, max 8MB]
-    F --> G{Valid}
+    E -- Yes --> F
+    F --> G
     G -- No --> F
-    G -- Yes --> H[Submit images to backend]
-    H --> I[Rename and store images with timestamp format]
-    I --> J[Log request - filename, timestamp, IP]
-    J --> K{Requests less than 50 per hour}
-    K -- No --> L[Reject with rate limit error]
-    K -- Yes --> M[Send image and prompt to OpenAI Vision API]
-    M --> N{API returns tables}
-    N -- No --> O[Show raw error to user]
-    N -- Yes --> P[Store output in database with timestamp and job ID]
-    P --> Q[Show markdown and rendered tables - copy, download, edit, retry]
-    Q --> R[User can edit prompt and retry]
+    G -- Yes --> H
+    H --> I
+    I --> J
+    J -- No --> M
+    J -- Yes --> K
+    K --> L
+    L -- No --> M
+    L -- Yes --> N
+    N --> O
+    O --> P
+    P -- Retry --> K
+
 ```
 
 ---
