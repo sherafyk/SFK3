@@ -7,6 +7,29 @@ It explains the full architecture, agent roles, build steps, and requirements—
 A simple, secure web app for uploading field documents (images) and extracting two structured tables (Arrival/Departure conditions) using OpenAI Vision models.  
 Outputs are shown in markdown and rendered table format, with full audit and user features.
 
+```mermaid
+flowchart TD
+    A[User visits web page] --> B{Is user authenticated - Password API2025}
+    B -- No --> C[Show login form]
+    B -- Yes --> D[Show upload UI - Drag and drop or file picker]
+    D --> E{Upload one or more images}
+    E -- No --> D
+    E -- Yes --> F[Preview thumbnails - Validate files png, jpg, webp, max 8MB]
+    F --> G{Valid}
+    G -- No --> F
+    G -- Yes --> H[Submit images to backend]
+    H --> I[Rename and store images with timestamp format]
+    I --> J[Log request - filename, timestamp, IP]
+    J --> K{Requests less than 50 per hour}
+    K -- No --> L[Reject with rate limit error]
+    K -- Yes --> M[Send image and prompt to OpenAI Vision API]
+    M --> N{API returns tables}
+    N -- No --> O[Show raw error to user]
+    N -- Yes --> P[Store output in database with timestamp and job ID]
+    P --> Q[Show markdown and rendered tables - copy, download, edit, retry]
+    Q --> R[User can edit prompt and retry]
+```
+
 ---
 
 ## 1. Solution Architecture
