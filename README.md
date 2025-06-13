@@ -12,6 +12,12 @@ A simple web app for uploading field document images and extracting arrival and 
 - Rate limited to 50 uploads/hour per IP
 
 ## Setup
+```
+git clone https://github.com/sherafyk/SFK3.git
+```
+```
+cd SFK3
+```
 1. Copy `.env.example` to `.env` and update values.
 2. Build and run with Docker:
 ```bash
@@ -25,3 +31,15 @@ Install dependencies and run pytest:
 pip install -r requirements.txt
 pytest
 ```
+## Updating
+
+Pull the latest changes and rebuild:
+
+```bash
+git pull
+docker-compose down
+docker-compose up -d --build
+```
+
+
+
