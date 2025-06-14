@@ -15,6 +15,20 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 
+def get_file_size(file) -> int:
+    """Return file size in bytes without reading the stream."""
+    pos = file.stream.tell()
+    file.stream.seek(0, os.SEEK_END)
+    size = file.stream.tell()
+    file.stream.seek(pos)
+    return size
+
+
+def generate_job_id() -> str:
+    """Generate a UTC timestamped 5 character job ID."""
+    return f"{datetime.datetime.utcnow().strftime('%Y%m%d-%H%M')}-{uuid.uuid4().hex[:5].upper()}"
+
+
 def allowed_file(filename: str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -65,9 +79,10 @@ def generate_prompt() -> str:
 
 
 def call_openai(path: str, prompt: str, filename: str) -> str:
-    with open(path, 'rb') as f:
-        ext = filename.rsplit('.', 1)[1].lower()
-        b64 = base64.b64encode(f.read()).decode()
+    try:
+        with open(path, 'rb') as f:
+            ext = filename.rsplit('.', 1)[1].lower()
+            b64 = base64.b64encode(f.read()).decode()
         response = openai.chat.completions.create(
             model=MODEL,
             messages=[
@@ -75,12 +90,17 @@ def call_openai(path: str, prompt: str, filename: str) -> str:
                     "role": "user",
                     "content": [
                         {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": f"data:image/{ext};base64,{b64}"}},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/{ext};base64,{b64}"},
+                        },
                     ],
                 }
             ],
         )
-    return response.choices[0].message.content
+        return response.choices[0].message.content
+    except openai.OpenAIError as e:
+        raise RuntimeError(f"OpenAI API error: {e}") from e
 
 
 def convert_markdown(md: str) -> str:
@@ -193,8 +213,11 @@ Output only valid JSON."""
 
 def call_openai_json(tables: str) -> str:
     message = tables + "\n\n" + JSON_PROMPT
-    response = openai.chat.completions.create(
-        model=MODEL,
-        messages=[{"role": "user", "content": message}],
-    )
-    return response.choices[0].message.content
+    try:
+        response = openai.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": message}],
+        )
+        return response.choices[0].message.content
+    except openai.OpenAIError as e:
+        raise RuntimeError(f"OpenAI API error: {e}") from e
