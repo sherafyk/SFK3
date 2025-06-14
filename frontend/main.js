@@ -10,6 +10,7 @@ let editorImg = document.getElementById('editor-image');
 let zoomRange = document.getElementById('zoomRange');
 let brightnessRange = document.getElementById('brightnessRange');
 let contrastRange = document.getElementById('contrastRange');
+let autoEnhanceBtn = document.getElementById('autoEnhance');
 let applyBtn = document.getElementById('applyEdit');
 let cancelBtn = document.getElementById('cancelEdit');
 let cropper;
@@ -113,11 +114,40 @@ zoomRange.oninput = () => {
   if(cropper) cropper.zoomTo(parseFloat(zoomRange.value));
 };
 
+let filterFrame;
 function updateFilters(){
-  editorImg.style.filter = `brightness(${brightnessRange.value}) contrast(${contrastRange.value})`;
+  if(filterFrame) cancelAnimationFrame(filterFrame);
+  filterFrame = requestAnimationFrame(() => {
+    editorImg.style.filter = `brightness(${brightnessRange.value}) contrast(${contrastRange.value})`;
+  });
 }
 brightnessRange.oninput = updateFilters;
 contrastRange.oninput = updateFilters;
+
+autoEnhanceBtn && (autoEnhanceBtn.onclick = () => {
+  if(!cropper) return;
+  let canvas = cropper.getCroppedCanvas();
+  let ctx = canvas.getContext('2d');
+  let data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
+  let sum = 0;
+  for(let i=0;i<data.length;i+=4){
+    sum += 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+  }
+  let avg = sum/(canvas.width*canvas.height)/255;
+  let target = 0.75;
+  let newBrightness = Math.min(Math.max(target/avg,0.5),1.5);
+  let variance = 0;
+  for(let i=0;i<data.length;i+=4){
+    let lum = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+    variance += Math.pow(lum - avg*255,2);
+  }
+  let std = Math.sqrt(variance/(canvas.width*canvas.height))/255;
+  let targetStd = 0.25;
+  let newContrast = Math.min(Math.max(targetStd/std,0.5),1.5);
+  brightnessRange.value = newBrightness.toFixed(2);
+  contrastRange.value = newContrast.toFixed(2);
+  updateFilters();
+});
 
 applyBtn && (applyBtn.onclick = () => {
   if(!cropper) return;
