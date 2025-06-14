@@ -2,7 +2,9 @@ import os
 import sqlite3
 import datetime
 
-DB_PATH = os.path.join(os.getenv('UPLOAD_FOLDER', 'data'), 'requests.db')
+from backend.utils import UPLOAD_FOLDER
+
+DB_PATH = os.path.join(UPLOAD_FOLDER, 'requests.db')
 
 
 def init_db():
