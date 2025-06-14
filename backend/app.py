@@ -1,6 +1,4 @@
 import os
-import uuid
-import datetime
 from flask import (
     Flask,
     render_template,
@@ -18,7 +16,9 @@ from dotenv import load_dotenv
 from backend.utils import (
     allowed_file,
     save_file,
+    get_file_size,
     generate_prompt,
+    generate_job_id,
     call_openai,
     call_openai_json,
     convert_markdown,
@@ -65,7 +65,7 @@ def upload():
         results = []
         for file in files:
             if file and allowed_file(file.filename):
-                if len(file.read()) > MAX_FILE_SIZE_MB * 1024 * 1024:
+                if get_file_size(file) > MAX_FILE_SIZE_MB * 1024 * 1024:
                     flash(f"{file.filename} exceeds size limit")
                     continue
                 file.seek(0)
@@ -75,7 +75,7 @@ def upload():
                     output_text = call_openai(path, prompt, new_name)
                 except Exception as e:
                     output_text = str(e)
-                job_id = f"{datetime.datetime.utcnow().strftime('%Y%m%d-%H%M')}-{uuid.uuid4().hex[:5].upper()}"
+                job_id = generate_job_id()
                 log_request(new_name, request.remote_addr, prompt, output_text)
                 html_output = convert_markdown(output_text)
                 results.append(
@@ -104,7 +104,7 @@ def retry(filename):
         output_text = call_openai(path, prompt, filename)
     except Exception as e:
         output_text = str(e)
-    job_id = f"{datetime.datetime.utcnow().strftime('%Y%m%d-%H%M')}-{uuid.uuid4().hex[:5].upper()}"
+    job_id = generate_job_id()
     log_request(filename, request.remote_addr, prompt, output_text)
     html_output = convert_markdown(output_text)
     result = {
