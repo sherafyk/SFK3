@@ -25,3 +25,14 @@ def client():
 def test_login(client):
     rv = client.post('/', data={'password': 'API2025'}, follow_redirects=True)
     assert b'Upload Images' in rv.data
+
+
+def test_preprocess_image(tmp_path):
+    from backend.utils import preprocess_image
+    from PIL import Image
+
+    img_path = tmp_path / 'color.png'
+    Image.new('RGB', (10, 10), 'red').save(img_path)
+    preprocess_image(str(img_path))
+    processed = Image.open(img_path)
+    assert processed.mode == 'L'

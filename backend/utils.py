@@ -5,6 +5,7 @@ import base64
 from werkzeug.utils import secure_filename
 import openai
 from markdown2 import markdown
+from PIL import Image, ImageOps
 
 UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join('backend', 'data'))
 ALLOWED_EXTENSIONS = set(os.getenv('ALLOWED_EXTENSIONS', 'png,jpg,jpeg,webp').split(','))
@@ -45,6 +46,14 @@ def save_file(file):
     return new_name, path
 
 
+def preprocess_image(path: str) -> None:
+    """Convert image to grayscale and apply autocontrast in-place."""
+    with Image.open(path) as img:
+        gray = ImageOps.grayscale(img)
+        processed = ImageOps.autocontrast(gray)
+        processed.save(path)
+
+
 def generate_prompt() -> str:
     return (
         "Please analyze the attached image and extract the tank data as five separate tables, in markdown format:\n"
@@ -80,6 +89,7 @@ def generate_prompt() -> str:
 
 def call_openai(path: str, prompt: str, filename: str) -> str:
     try:
+        preprocess_image(path)
         with open(path, 'rb') as f:
             ext = filename.rsplit('.', 1)[1].lower()
             b64 = base64.b64encode(f.read()).decode()
