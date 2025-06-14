@@ -41,3 +41,34 @@ function download(i){
   a.download = 'result_'+i+'.md';
   a.click();
 }
+
+function exportJSON(i){
+  let md = document.getElementById('md'+i).textContent;
+  fetch('/json', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({markdown: md})
+  })
+    .then(r => r.json())
+    .then(data => {
+      let txt = document.getElementById('json'+i);
+      txt.style.display = 'block';
+      txt.value = data.json;
+      document.getElementById('copyJson'+i).style.display = 'inline';
+      document.getElementById('downloadJson'+i).style.display = 'inline';
+    });
+}
+
+function copyJson(i){
+  let el = document.getElementById('json'+i);
+  navigator.clipboard.writeText(el.value);
+}
+
+function downloadJson(i){
+  let el = document.getElementById('json'+i);
+  let blob = new Blob([el.value], {type: 'application/json'});
+  let a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'result_'+i+'.json';
+  a.click();
+}

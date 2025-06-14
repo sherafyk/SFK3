@@ -12,6 +12,11 @@
     <pre id="md{{ loop.index }}">{{ r.output }}</pre>
     <button onclick="copy({{ loop.index }})">Copy Markdown</button>
     <button onclick="download({{ loop.index }})">Download Markdown</button>
+    <button onclick="exportJSON({{ loop.index }})">Export as JSON</button>
+    <br>
+    <textarea id="json{{ loop.index }}" rows="10" cols="80" readonly style="display:none"></textarea><br>
+    <button id="copyJson{{ loop.index }}" onclick="copyJson({{ loop.index }})" style="display:none">Copy JSON</button>
+    <button id="downloadJson{{ loop.index }}" onclick="downloadJson({{ loop.index }})" style="display:none">Download JSON</button>
     <form method="post" action="{{ url_for('retry', filename=r.filename) }}">
         <textarea name="prompt" rows="6" cols="80">{{ r.prompt }}</textarea><br>
         <button type="submit">Edit & Retry</button>

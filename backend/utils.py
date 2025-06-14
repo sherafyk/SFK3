@@ -82,3 +82,115 @@ def call_openai(path: str, prompt: str, filename: str) -> str:
 
 def convert_markdown(md: str) -> str:
     return markdown(md)
+
+
+JSON_PROMPT = """Please convert the tables below into a single JSON object that strictly follows this JSON Schema:
+
+```
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TankReport",
+  "type": "object",
+  "properties": {
+    "tankConditions": {
+      "type": "object",
+      "properties": {
+        "arrival": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/tankCondition" }
+        },
+        "departure": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/tankCondition" }
+        }
+      },
+      "required": ["arrival", "departure"]
+    },
+    "productsDischarged": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/productDischarged" }
+    },
+    "eventTimeline": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/eventTimeline" }
+    },
+    "draftReadings": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/draftReading" }
+    }
+  },
+  "required": ["tankConditions", "productsDischarged", "eventTimeline", "draftReadings"],
+  "definitions": {
+    "tankCondition": {
+      "type": "object",
+      "properties": {
+        "tank":         { "type": "string" },
+        "productName":  { "type": "string" },
+        "api":          { "type": "number" },
+        "ullageFt":     { "type": "number" },
+        "ullageIn":     { "type": "number" },
+        "tempF":        { "type": "number" },
+        "waterBbls":    { "type": "number" },
+        "grossBbls":    { "type": "number" },
+        "netBbls":      { "type": "number" },
+        "metricTons":   { "type": "number" }
+      },
+      "required": ["tank", "productName", "api", "ullageFt", "ullageIn", "tempF", "waterBbls", "grossBbls", "netBbls", "metricTons"]
+    },
+    "productDischarged": {
+      "type": "object",
+      "properties": {
+        "productName": { "type": "string" },
+        "api":         { "type": "number" },
+        "grossBbls":   { "type": "number" },
+        "netBbls":     { "type": "number" },
+        "metricTons":  { "type": "number" }
+      },
+      "required": ["productName", "api", "grossBbls", "netBbls", "metricTons"]
+    },
+    "eventTimeline": {
+      "type": "object",
+      "properties": {
+        "event": { "type": "string" },
+        "date":  { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "time":  { "type": "string", "pattern": "^[0-9]{2}:[0-9]{2}$" }
+      },
+      "required": ["event", "date", "time"]
+    },
+    "draftReading": {
+      "type": "object",
+      "properties": {
+        "event": { "type": "string" },
+        "fwd": {
+          "type": "object",
+          "properties": {
+            "port":  { "type": "number" },
+            "stbd":  { "type": "number" }
+          },
+          "required": ["port", "stbd"]
+        },
+        "aft": {
+          "type": "object",
+          "properties": {
+            "port":  { "type": "number" },
+            "stbd":  { "type": "number" }
+          },
+          "required": ["port", "stbd"]
+        }
+      },
+      "required": ["event", "fwd", "aft"]
+    }
+  }
+}
+```
+
+Output only valid JSON."""
+
+
+def call_openai_json(tables: str) -> str:
+    message = tables + "\n\n" + JSON_PROMPT
+    response = openai.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": message}],
+    )
+    return response.choices[0].message.content
