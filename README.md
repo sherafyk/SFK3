@@ -20,15 +20,20 @@ git clone https://github.com/sherafyk/SFK3.git
 ```
 cd SFK3
 ```
-1. Copy `.env.example` to `.env` and update values.
+1. Install the Python dependencies so you can run the app and tests.
+```bash
+pip install -r requirements.txt
+pip install -r requirements-dev.txt  # adds pytest and other dev tools
+```
+2. Copy `.env.example` to `.env` and update values.
 ```
 cp .env.example .env
 ```
-2. Build and run with Docker:
+3. Build and run with Docker:
 ```bash
 docker-compose up -d --build
 ```
-3. Visit `http://localhost:5000` and login with the password.
+4. Visit `http://localhost:5000` and login with the password.
 
 ## Structure
 
@@ -55,7 +60,7 @@ docker-compose up -d --build
 ## Testing
 Install dependencies and run pytest:
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 pytest
 ```
 ## Updating
