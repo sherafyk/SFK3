@@ -217,6 +217,8 @@ def call_openai_json(tables: str) -> str:
         response = openai.chat.completions.create(
             model=MODEL,
             messages=[{"role": "user", "content": message}],
+            response_format={"type": "json_object"},
+            temperature=0,
         )
         return response.choices[0].message.content
     except openai.OpenAIError as e:
