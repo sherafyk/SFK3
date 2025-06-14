@@ -43,7 +43,6 @@ function preventDefaults (e) { e.preventDefault(); e.stopPropagation(); }
 function handleDrop(e) {
   let dt = e.dataTransfer;
   let files = dt.files;
-  fileElem.files = files;
   previewFiles(files);
 }
 
@@ -72,6 +71,9 @@ function stopProgress() {
 
 function previewFiles(files) {
   filesToUpload = [...files];
+  Array.from(gallery.querySelectorAll('img')).forEach(img => {
+    URL.revokeObjectURL(img.src);
+  });
   gallery.innerHTML = '';
   filesToUpload.forEach((file, idx) => {
     let div = document.createElement('div');
@@ -163,6 +165,7 @@ applyBtn && (applyBtn.onclick = () => {
     let newFile = new File([blob], oldFile.name, {type: oldFile.type});
     filesToUpload[currentIndex] = newFile;
     let previewImg = gallery.children[currentIndex].querySelector('img');
+    URL.revokeObjectURL(previewImg.src);
     previewImg.src = URL.createObjectURL(newFile);
     closeEditor();
   }, filesToUpload[currentIndex].type);

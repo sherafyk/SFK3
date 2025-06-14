@@ -1,4 +1,5 @@
 import os
+import uuid
 import datetime
 import base64
 from werkzeug.utils import secure_filename
@@ -19,10 +20,12 @@ def allowed_file(filename: str) -> bool:
 
 
 def save_file(file):
+    """Save an uploaded file to ``UPLOAD_FOLDER`` with a unique name."""
     now = datetime.datetime.utcnow().strftime('%Y%m%d-%H%M%S')
     filename = secure_filename(file.filename)
     ext = filename.rsplit('.', 1)[1].lower()
-    new_name = f"{now}.{ext}"
+    unique = uuid.uuid4().hex[:6]
+    new_name = f"{now}-{unique}.{ext}"
     path = os.path.join(UPLOAD_FOLDER, new_name)
     file.save(path)
     return new_name, path
@@ -81,7 +84,8 @@ def call_openai(path: str, prompt: str, filename: str) -> str:
 
 
 def convert_markdown(md: str) -> str:
-    return markdown(md)
+    """Convert markdown text to HTML with table support."""
+    return markdown(md, extras=["tables"])
 
 
 JSON_PROMPT = """Please convert the tables below into a single JSON object that strictly follows this JSON Schema:
