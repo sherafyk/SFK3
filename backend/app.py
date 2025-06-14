@@ -9,6 +9,7 @@ from flask import (
     url_for,
     session,
     flash,
+    jsonify,
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -19,6 +20,7 @@ from backend.utils import (
     save_file,
     generate_prompt,
     call_openai,
+    call_openai_json,
     convert_markdown,
     UPLOAD_FOLDER,
     MODEL,
@@ -113,6 +115,20 @@ def retry(filename):
         'prompt': prompt,
     }
     return render_template('result.html', results=[result])
+
+
+@app.route('/json', methods=['POST'])
+@limiter.limit(f"{RATE_LIMIT_PER_HOUR}/hour")
+def to_json():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    data = request.get_json() or {}
+    markdown_tables = data.get('markdown', '')
+    try:
+        json_text = call_openai_json(markdown_tables)
+    except Exception as e:
+        json_text = str(e)
+    return jsonify({'json': json_text})
 
 
 @app.route('/logout')
