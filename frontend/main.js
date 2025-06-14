@@ -13,6 +13,8 @@ let contrastRange = document.getElementById('contrastRange');
 let autoEnhanceBtn = document.getElementById('autoEnhance');
 let applyBtn = document.getElementById('applyEdit');
 let cancelBtn = document.getElementById('cancelEdit');
+let rotateLeftBtn = document.getElementById('rotateLeft');
+let rotateRightBtn = document.getElementById('rotateRight');
 let cropper;
 let currentIndex = null;
 
@@ -125,6 +127,8 @@ function updateFilters(){
 }
 brightnessRange.oninput = updateFilters;
 contrastRange.oninput = updateFilters;
+rotateLeftBtn && (rotateLeftBtn.onclick = () => { if(cropper) cropper.rotate(-90); });
+rotateRightBtn && (rotateRightBtn.onclick = () => { if(cropper) cropper.rotate(90); });
 
 autoEnhanceBtn && (autoEnhanceBtn.onclick = () => {
   if(!cropper) return;

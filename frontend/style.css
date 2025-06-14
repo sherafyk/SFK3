@@ -12,6 +12,7 @@ body.login-page { display:flex; justify-content:center; align-items:center; heig
 .modal-content { background:#fff; padding:20px; max-width:90%; max-height:90%; overflow:auto; }
 #editor-image { max-width:100%; height:auto; }
 .controls { margin-top:10px; display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+.controls button { padding:4px 8px; }
 
 #progress-container { position:fixed; top:0; left:0; width:100%; height:4px; background:#eee; z-index:9999; }
 #progress-bar { width:0%; height:100%; background:#4caf50; transition:width 0.3s ease; }
