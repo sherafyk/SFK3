@@ -3,3 +3,4 @@ python-dotenv
 Flask-Limiter
 openai
 markdown2
+Pillow
