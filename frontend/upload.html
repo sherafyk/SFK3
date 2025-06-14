@@ -8,6 +8,9 @@
 <body>
     <h2>Upload Images (Model: {{ model }})</h2>
     <a href="{{ url_for('logout') }}">Logout</a>
+    <div id="progress-container" style="display:none">
+        <div id="progress-bar"></div>
+    </div>
     <div id="drop-area">Drop images here</div>
     <form id="form" method="post" enctype="multipart/form-data">
         <input id="fileElem" type="file" name="files" accept="image/*" multiple style="display:none"/>

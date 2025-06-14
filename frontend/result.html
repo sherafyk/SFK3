@@ -6,6 +6,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <div id="progress-container" style="display:none">
+        <div id="progress-bar"></div>
+    </div>
     <a href="{{ url_for('upload') }}">Back</a>
     {% for r in results %}
     <h3>{{ r.filename }} - {{ r.job_id }}</h3>
@@ -17,7 +20,7 @@
     <textarea id="json{{ loop.index }}" rows="10" cols="80" readonly style="display:none"></textarea><br>
     <button id="copyJson{{ loop.index }}" onclick="copyJson({{ loop.index }})" style="display:none">Copy JSON</button>
     <button id="downloadJson{{ loop.index }}" onclick="downloadJson({{ loop.index }})" style="display:none">Download JSON</button>
-    <form method="post" action="{{ url_for('retry', filename=r.filename) }}">
+    <form method="post" class="retry-form" action="{{ url_for('retry', filename=r.filename) }}">
         <textarea name="prompt" rows="6" cols="80">{{ r.prompt }}</textarea><br>
         <button type="submit">Edit & Retry</button>
     </form>

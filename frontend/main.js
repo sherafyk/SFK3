@@ -1,6 +1,9 @@
 let dropArea = document.getElementById('drop-area');
 let fileElem = document.getElementById('fileElem');
 let gallery = document.getElementById('gallery');
+let progressContainer = document.getElementById('progress-container');
+let progressBar = document.getElementById('progress-bar');
+let progressInterval;
 
 if (dropArea) {
   ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -10,6 +13,15 @@ if (dropArea) {
   fileElem.addEventListener('change', () => previewFiles(fileElem.files));
 }
 
+let form = document.getElementById('form');
+if (form) {
+  form.addEventListener('submit', startProgress);
+}
+
+document.querySelectorAll('.retry-form').forEach(f => {
+  f.addEventListener('submit', startProgress);
+});
+
 function preventDefaults (e) { e.preventDefault(); e.stopPropagation(); }
 
 function handleDrop(e) {
@@ -17,6 +29,29 @@ function handleDrop(e) {
   let files = dt.files;
   fileElem.files = files;
   previewFiles(files);
+}
+
+function startProgress() {
+  if (!progressContainer) return;
+  progressContainer.style.display = 'block';
+  progressBar.style.width = '0%';
+  let width = 0;
+  progressInterval = setInterval(() => {
+    if (width < 95) {
+      width += 1;
+      progressBar.style.width = width + '%';
+    }
+  }, 150);
+}
+
+function stopProgress() {
+  if (!progressContainer) return;
+  clearInterval(progressInterval);
+  progressBar.style.width = '100%';
+  setTimeout(() => {
+    progressContainer.style.display = 'none';
+    progressBar.style.width = '0%';
+  }, 300);
 }
 
 function previewFiles(files) {
@@ -44,6 +79,7 @@ function download(i){
 
 function exportJSON(i){
   let md = document.getElementById('md'+i).textContent;
+  startProgress();
   fetch('/json', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -56,6 +92,9 @@ function exportJSON(i){
       txt.value = data.json;
       document.getElementById('copyJson'+i).style.display = 'inline';
       document.getElementById('downloadJson'+i).style.display = 'inline';
+    })
+    .finally(() => {
+      stopProgress();
     });
 }
 
