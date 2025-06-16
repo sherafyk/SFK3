@@ -13,6 +13,8 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 
+load_dotenv()
+
 from backend.utils import (
     allowed_file,
     save_file,
@@ -28,7 +30,6 @@ from backend.utils import (
 )
 from backend.models import init_db, log_request
 
-load_dotenv()
 LOGIN_PASSWORD = os.getenv('LOGIN_PASSWORD', 'API2025')
 RATE_LIMIT_PER_HOUR = int(os.getenv('RATE_LIMIT_PER_HOUR', 50))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -114,7 +115,7 @@ def retry(filename):
         'job_id': job_id,
         'prompt': prompt,
     }
-    return render_template('result.html', results=[result])
+return render_template('result.html', results=[result])
 
 
 @app.route('/json', methods=['POST'])
@@ -139,4 +140,3 @@ def logout():
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 57701))
-    app.run(debug=True, host='0.0.0.0', port=port)
