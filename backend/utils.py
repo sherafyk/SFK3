@@ -4,6 +4,8 @@ import datetime
 import base64
 import shutil
 import sqlite3
+import json
+import re
 from werkzeug.utils import secure_filename
 import openai
 from markdown2 import markdown
@@ -16,6 +18,16 @@ MODEL = os.getenv('MODEL', 'o4-mini')
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 openai.api_key = os.getenv('OPENAI_API_KEY')
+
+SCHEMA_KEYS = {"arrival_tanks", "departure_tanks", "products", "time_log", "draft_readings"}
+
+
+def markdown_looks_like_json(md: str) -> bool:
+    try:
+        obj = json.loads(md)
+        return SCHEMA_KEYS <= obj.keys()
+    except json.JSONDecodeError:
+        return False
 
 # Database path shared across the app
 DB_PATH = os.path.join(UPLOAD_FOLDER, 'requests.db')

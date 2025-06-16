@@ -24,6 +24,7 @@ from backend.utils import (
     generate_job_id,
     call_openai,
     call_openai_json,
+    markdown_looks_like_json,
     convert_markdown,
     UPLOAD_FOLDER,
     MODEL,
@@ -52,8 +53,11 @@ init_db()
 
 def vision_pipeline(image_path: str):
     prompt = generate_prompt()
-    output_text = call_openai(image_path, prompt, os.path.basename(image_path))
-    return prompt, output_text
+    md = call_openai(image_path, prompt, os.path.basename(image_path))
+    if markdown_looks_like_json(md):
+        return prompt, md
+    json_out = call_openai_json(md)
+    return prompt, json_out
 
 
 @app.route('/', methods=['GET', 'POST'])
