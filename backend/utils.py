@@ -2,6 +2,7 @@ import os
 import uuid
 import datetime
 import base64
+import io
 import shutil
 import sqlite3
 import json
@@ -119,9 +120,11 @@ def generate_prompt() -> str:
 def call_openai(path: str, prompt: str, filename: str) -> str:
     try:
         preprocess_image(path)
-        with open(path, 'rb') as f:
-            ext = filename.rsplit('.', 1)[1].lower()
-            b64 = base64.b64encode(f.read()).decode()
+        with Image.open(path) as img:
+            buf = io.BytesIO()
+            img.save(buf, format="PNG")
+            ext = "png"
+            b64 = base64.b64encode(buf.getbuffer()).decode()
         response = openai.chat.completions.create(
             model=MODEL,
             messages=[
