@@ -36,3 +36,4 @@ def test_preprocess_image(tmp_path):
     preprocess_image(str(img_path))
     processed = Image.open(img_path)
     assert processed.mode == 'L'
+    assert (img_path.with_suffix(img_path.suffix + '.orig')).exists()

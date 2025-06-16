@@ -33,7 +33,7 @@ cp .env.example .env
 ```bash
 docker-compose up -d --build
 ```
-4. Visit `http://localhost:5000` and login with the password.
+4. Visit `http://localhost:57701` and login with the password.
 
 ## Structure
 
