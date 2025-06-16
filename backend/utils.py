@@ -236,7 +236,7 @@ def call_openai_json(tables: str) -> str:
             model=MODEL,
             messages=[{"role": "user", "content": message}],
             response_format={"type": "json_object"},
-            # temperature=0, o4-mini models does not use temperature, defaults to 1
+            temperature=0,
         )
         return response.choices[0].message.content
     except openai.OpenAIError as e:

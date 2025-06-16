@@ -29,6 +29,7 @@ from backend.utils import (
     MAX_FILE_SIZE_MB,
 )
 from backend.models import init_db, log_request
+from backend import worker
 
 LOGIN_PASSWORD = os.getenv('LOGIN_PASSWORD', 'API2025')
 RATE_LIMIT_PER_HOUR = int(os.getenv('RATE_LIMIT_PER_HOUR', 50))
@@ -41,6 +42,12 @@ limiter = Limiter(key_func=get_remote_address, default_limits=[f"{RATE_LIMIT_PER
 limiter.init_app(app)
 
 init_db()
+
+
+def vision_pipeline(image_path: str):
+    prompt = generate_prompt()
+    output_text = call_openai(image_path, prompt, os.path.basename(image_path))
+    return prompt, output_text
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -71,11 +78,11 @@ def upload():
                     continue
                 file.seek(0)
                 new_name, path = save_file(file)
-                prompt = generate_prompt()
+                fut = worker.run_async(vision_pipeline, path)
                 try:
-                    output_text = call_openai(path, prompt, new_name)
+                    prompt, output_text = fut.result()
                 except Exception as e:
-                    output_text = str(e)
+                    prompt, output_text = generate_prompt(), str(e)
                 job_id = generate_job_id()
                 log_request(new_name, request.remote_addr, prompt, output_text)
                 html_output = convert_markdown(output_text)
