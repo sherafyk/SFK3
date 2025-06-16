@@ -11,6 +11,7 @@ from flask import (
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from redis import Redis
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -33,12 +34,17 @@ from backend import worker
 
 LOGIN_PASSWORD = os.getenv('LOGIN_PASSWORD', 'API2025')
 RATE_LIMIT_PER_HOUR = int(os.getenv('RATE_LIMIT_PER_HOUR', 50))
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "..", "frontend")
 app = Flask(__name__, template_folder=FRONTEND_DIR, static_folder=FRONTEND_DIR)
 app.secret_key = os.getenv('SECRET_KEY', os.urandom(24))
 
-limiter = Limiter(key_func=get_remote_address, default_limits=[f"{RATE_LIMIT_PER_HOUR}/hour"])
+limiter = Limiter(
+    key_func=get_remote_address,
+    storage_uri=REDIS_URL,
+    default_limits=[f"{RATE_LIMIT_PER_HOUR}/hour"],
+)
 limiter.init_app(app)
 
 init_db()
