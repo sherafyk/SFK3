@@ -115,7 +115,7 @@ def retry(filename):
         'job_id': job_id,
         'prompt': prompt,
     }
-return render_template('result.html', results=[result])
+    return render_template('result.html', results=[result])
 
 
 @app.route('/json', methods=['POST'])
@@ -140,3 +140,4 @@ def logout():
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 57701))
+    app.run(host='0.0.0.0', port=port)
