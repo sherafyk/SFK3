@@ -1,4 +1,4 @@
-## 1  Move blocking Vision & JSON calls off the Flask worker
+## TASK 1:  Move blocking Vision & JSON calls off the Flask worker
 
 1. **Add a tiny job-runner**
 
@@ -30,7 +30,7 @@
 
 ---
 
-## 2  Lightweight client-side image shrink
+## TASK 2:  Lightweight client-side image shrink
 
 1. **Frontend (`static/js/upload.js`)**
 
@@ -51,7 +51,7 @@
 
 ---
 
-## 3  Switch SQLite to WAL & add filename collision guard
+## TASK 3:  Switch SQLite to WAL & add filename collision guard
 
 1. **`backend/utils.py`**
 
@@ -74,7 +74,7 @@
 
 ---
 
-## 4  Persist rate-limit state with Redis
+## TASK 4: Persist rate-limit state with Redis
 
 1. **Install** `pip install redis`
 2. **`backend/app.py`**
@@ -95,7 +95,7 @@
 
 ---
 
-## 5  Skip second model call when Markdown is already spec-compliant
+## TASK 5: Skip second model call when Markdown is already spec-compliant
 
 1. **`backend/utils.py`**
 
@@ -125,7 +125,7 @@
 
 ---
 
-## 6  Base64 encode without extra memory copy
+## TASK 6: Base64 encode without extra memory copy
 
 1. **Replace** in `utils.py`
 
@@ -140,7 +140,7 @@
 
 ---
 
-## 7  Security hardening quick-wins
+## TASK 7: Security hardening quick-wins
 
 1. **Config**
 
@@ -170,7 +170,7 @@
 
 ---
 
-## 8  Dead-file garbage collection
+## TASK 8: Dead-file garbage collection
 
 1. **Add cron-like cleaner** (`backend/cleanup.py`)
 
@@ -188,7 +188,7 @@
 
 ---
 
-## 9  Pin dependency versions
+## TASK 9: Pin dependency versions
 
 Create `requirements.lock`:
 
