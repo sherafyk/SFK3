@@ -5,3 +5,6 @@ openai
 markdown2
 Pillow
 redis
+Flask-WTF
+passlib
+argon2-cffi
