@@ -7,6 +7,7 @@ import pytest
 UPLOAD_DIR = tempfile.mkdtemp()
 os.environ.setdefault('UPLOAD_FOLDER', UPLOAD_DIR)
 os.environ.setdefault('REDIS_URL', 'memory://')
+os.environ.setdefault('APP_PASSWORD', 'API2025')
 from backend.app import app
 from backend.models import init_db
 
@@ -15,6 +16,7 @@ def client():
     db_dir = UPLOAD_DIR
     os.environ['UPLOAD_FOLDER'] = db_dir
     app.config['TESTING'] = True
+    app.config['WTF_CSRF_ENABLED'] = False
     init_db()
     with app.test_client() as client:
         yield client
