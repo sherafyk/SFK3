@@ -2,6 +2,7 @@ import os
 import uuid
 import datetime
 import base64
+import shutil
 from werkzeug.utils import secure_filename
 import openai
 from markdown2 import markdown
@@ -47,8 +48,15 @@ def save_file(file):
 
 
 def preprocess_image(path: str) -> None:
-    """Convert image to grayscale and apply autocontrast in-place."""
-    with Image.open(path) as img:
+    """Convert image to grayscale and apply autocontrast in-place.
+
+    The original image is preserved as ``<file>.orig`` so retries start
+    from the unmodified source.
+    """
+    orig_path = f"{path}.orig"
+    if not os.path.exists(orig_path):
+        shutil.copy(path, orig_path)
+    with Image.open(orig_path) as img:
         gray = ImageOps.grayscale(img)
         processed = ImageOps.autocontrast(gray)
         processed.save(path)

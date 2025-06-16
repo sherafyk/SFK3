@@ -121,8 +121,8 @@ def retry(filename):
 @limiter.limit(f"{RATE_LIMIT_PER_HOUR}/hour")
 def to_json():
     if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    data = request.get_json() or {}
+        return jsonify({'error': 'Unauthorized'}), 401
+    data = request.get_json(silent=True) or {}
     markdown_tables = data.get('markdown', '')
     try:
         json_text = call_openai_json(markdown_tables)
