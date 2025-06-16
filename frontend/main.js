@@ -28,11 +28,20 @@ if (dropArea) {
 
 let form = document.getElementById('form');
 if (form) {
-  form.addEventListener('submit', e => {
-    let dt = new DataTransfer();
-    filesToUpload.forEach(f => dt.items.add(f));
-    fileElem.files = dt.files;
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
     startProgress();
+    let dt = new DataTransfer();
+    for (let file of filesToUpload) {
+      const img = await createImageBitmap(file);
+      const canvas = new OffscreenCanvas(Math.min(img.width, 1024), Math.min(img.height, 1024));
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.8 });
+      dt.items.add(new File([blob], file.name, { type: 'image/jpeg' }));
+    }
+    fileElem.files = dt.files;
+    form.submit();
   });
 }
 
