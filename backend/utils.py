@@ -3,6 +3,7 @@ import uuid
 import datetime
 import base64
 import shutil
+import sqlite3
 from werkzeug.utils import secure_filename
 import openai
 from markdown2 import markdown
@@ -15,6 +16,15 @@ MODEL = os.getenv('MODEL', 'o4-mini')
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 openai.api_key = os.getenv('OPENAI_API_KEY')
+
+# Database path shared across the app
+DB_PATH = os.path.join(UPLOAD_FOLDER, 'requests.db')
+
+
+def get_db():
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.execute('PRAGMA journal_mode=WAL;')
+    return conn
 
 
 def get_file_size(file) -> int:
@@ -37,11 +47,10 @@ def allowed_file(filename: str) -> bool:
 
 def save_file(file):
     """Save an uploaded file to ``UPLOAD_FOLDER`` with a unique name."""
-    now = datetime.datetime.utcnow().strftime('%Y%m%d-%H%M%S')
+    now = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
     filename = secure_filename(file.filename)
     ext = filename.rsplit('.', 1)[1].lower()
-    unique = uuid.uuid4().hex[:6]
-    new_name = f"{now}-{unique}.{ext}"
+    new_name = f"{now}_{uuid.uuid4().hex[:8]}.{ext}"
     path = os.path.join(UPLOAD_FOLDER, new_name)
     file.save(path)
     return new_name, path
@@ -236,7 +245,7 @@ def call_openai_json(tables: str) -> str:
             model=MODEL,
             messages=[{"role": "user", "content": message}],
             response_format={"type": "json_object"},
-            # temperature=0, o4-mini models does not use temperature, defaults to 1
+            temperature=0,
         )
         return response.choices[0].message.content
     except openai.OpenAIError as e:
