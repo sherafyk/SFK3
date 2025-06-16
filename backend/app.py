@@ -33,6 +33,7 @@ from backend.utils import (
     MAX_FILE_SIZE_MB,
 )
 from backend.models import init_db, log_request
+from backend.cleanup import purge_old_uploads
 from backend import worker
 
 PASS_HASH = argon2.hash(os.environ['APP_PASSWORD'])
@@ -54,6 +55,7 @@ limiter = Limiter(
 limiter.init_app(app)
 
 init_db()
+purge_old_uploads()
 
 
 def vision_pipeline(image_path: str):
