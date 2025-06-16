@@ -8,3 +8,6 @@ services:
       - .:/app
     env_file:
       - .env
+  redis:
+    image: redis:7-alpine
+    restart: always

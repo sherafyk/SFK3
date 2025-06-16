@@ -6,6 +6,7 @@ import pytest
 
 UPLOAD_DIR = tempfile.mkdtemp()
 os.environ.setdefault('UPLOAD_FOLDER', UPLOAD_DIR)
+os.environ.setdefault('REDIS_URL', 'memory://')
 from backend.app import app
 from backend.models import init_db
 

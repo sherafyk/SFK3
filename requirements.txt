@@ -4,3 +4,4 @@ Flask-Limiter
 openai
 markdown2
 Pillow
+redis
