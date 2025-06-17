@@ -21,7 +21,7 @@
     <button id="copyJson{{ loop.index }}" onclick="copyJson({{ loop.index }})" style="display:none">Copy JSON</button>
     <button id="downloadJson{{ loop.index }}" onclick="downloadJson({{ loop.index }})" style="display:none">Download JSON</button>
     <form method="post" class="retry-form" action="{{ url_for('retry', filename=r.filename) }}">
-        {{ csrf_token() }}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <textarea name="prompt" rows="6" cols="80">{{ r.prompt }}</textarea><br>
         <button type="submit">Edit & Retry</button>
     </form>
