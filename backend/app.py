@@ -27,7 +27,6 @@ from backend.utils import (
     call_openai,
     call_openai_json,
     enhance_tank_conditions,
-    markdown_looks_like_json,
     convert_markdown,
     UPLOAD_FOLDER,
     MODEL,
@@ -64,12 +63,7 @@ purge_old_uploads()
 def vision_pipeline(image_path: str):
     prompt = generate_prompt()
     md = call_openai(image_path, prompt, os.path.basename(image_path))
-    if markdown_looks_like_json(md):
-        json_out = md
-    else:
-        json_out = call_openai_json(md)
-    enhanced = enhance_tank_conditions(json_out)
-    return prompt, enhanced
+    return prompt, md
 
 
 @app.route('/', methods=['GET', 'POST'])

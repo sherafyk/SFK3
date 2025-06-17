@@ -200,7 +200,8 @@ function download(i){
 }
 
 function exportJSON(i){
-  let md = document.getElementById('md'+i).textContent;
+  let container = document.getElementById('table'+i);
+  let md = tablesToMarkdown(container);
   startProgress();
   fetch('/json', {
     method: 'POST',
@@ -233,3 +234,34 @@ function downloadJson(i){
   a.download = 'result_'+i+'.json';
   a.click();
 }
+
+function makeTableEditable(container){
+  container.querySelectorAll('table').forEach(table => {
+    table.classList.add('editable');
+    table.querySelectorAll('th, td').forEach(cell => {
+      cell.contentEditable = 'true';
+    });
+  });
+}
+
+function tablesToMarkdown(container){
+  let parts = [];
+  container.querySelectorAll('table').forEach(table => {
+    let lines = [];
+    let rows = table.querySelectorAll('tr');
+    rows.forEach((row, idx) => {
+      let cells = row.querySelectorAll('th, td');
+      let values = Array.from(cells).map(c => c.textContent.trim().replace(/\|/g, '\\|'));
+      lines.push('|' + values.join('|') + '|');
+      if(idx === 0){
+        lines.push('|' + values.map(()=>'---').join('|') + '|');
+      }
+    });
+    parts.push(lines.join('\n'));
+  });
+  return parts.join('\n\n');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-editable-table]').forEach(el => makeTableEditable(el));
+});

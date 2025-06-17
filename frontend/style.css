@@ -4,6 +4,17 @@ body { font-family: Arial, sans-serif; margin:40px; }
 pre { background:#f2f2f2; padding:10px; }
 table { border-collapse:collapse; margin-bottom:20px; }
 th, td { border:1px solid #ccc; padding:4px 8px; }
+table.editable td[contenteditable],
+table.editable th[contenteditable] {
+  min-width:40px;
+  border:1px solid #ccc;
+  padding:4px 8px;
+}
+table.editable td[contenteditable]:focus,
+table.editable th[contenteditable]:focus {
+  outline:2px solid #4caf50;
+}
+.edit-note { font-style: italic; color: #555; margin: 5px 0; }
 form.login { display:flex; flex-direction:column; align-items:center; background:#fff; padding:20px; border-radius:5px; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
 body.login-page { display:flex; justify-content:center; align-items:center; height:100vh; background:#f2f2f2; }
 
