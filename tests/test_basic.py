@@ -60,3 +60,38 @@ def test_job_detail_missing_db(client):
     rv = client.get('/job/doesnotexist')
     assert rv.status_code == 404
     assert b'Job not found' in rv.data
+
+
+def test_job_detail_upgrades_schema(client, tmp_path):
+    """Older job databases without the ``json`` column should be upgraded"""
+    import sqlite3
+    from pathlib import Path
+    from backend.utils import UPLOAD_FOLDER
+
+    client.post('/', data={'password': 'API2025'}, follow_redirects=True)
+
+    db_path = Path(UPLOAD_FOLDER) / 'old.db'
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        """CREATE TABLE requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT,
+            timestamp TEXT,
+            ip TEXT,
+            prompt TEXT,
+            output TEXT
+        )"""
+    )
+    conn.execute(
+        "INSERT INTO requests (filename, timestamp, ip, prompt, output) VALUES (?,?,?,?,?)",
+        ('f', 't', '1.1.1.1', 'p', 'o'),
+    )
+    conn.commit()
+    conn.close()
+
+    rv = client.get(f'/job/{db_path.stem}')
+    assert rv.status_code == 200
+    assert b'f' in rv.data
+    with sqlite3.connect(db_path) as conn_check:
+        cols = [r[1] for r in conn_check.execute('PRAGMA table_info(requests)')]
+    assert 'json' in cols
