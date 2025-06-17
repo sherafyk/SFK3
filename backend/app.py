@@ -209,6 +209,11 @@ def job_detail(job_id):
             ),
             404,
         )
+    # Ensure database schema is up to date (older jobs may lack the ``json``
+    # column).  ``init_db`` will create the table if needed and add the column
+    # when missing.
+    init_db(db_path)
+
     if request.method == 'POST':
         with get_db(db_path) as conn:
             rows = conn.execute("SELECT id FROM requests").fetchall()

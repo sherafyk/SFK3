@@ -5,7 +5,11 @@ from backend.utils import UPLOAD_FOLDER, get_db, DB_PATH
 
 
 def init_db(path: str = DB_PATH):
-    """Initialize a ``requests`` table in the SQLite database at ``path``."""
+    """Initialize a ``requests`` table in the SQLite database at ``path``.
+
+    If the table already exists but is missing the ``json`` column, it will be
+    added automatically so older databases continue to work with newer code.
+    """
     with get_db(path) as conn:
         conn.execute(
             """CREATE TABLE IF NOT EXISTS requests (
@@ -18,6 +22,11 @@ def init_db(path: str = DB_PATH):
                 json TEXT
             )"""
         )
+        # Upgrade schema if ``json`` column is missing (for databases created
+        # before this column was introduced).
+        cols = [row[1] for row in conn.execute("PRAGMA table_info(requests)")]
+        if "json" not in cols:
+            conn.execute("ALTER TABLE requests ADD COLUMN json TEXT")
 
 
 def log_request(
