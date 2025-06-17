@@ -57,7 +57,7 @@ docker-compose up -d --build
 ## Usage
 1. Drag and drop or select one or more image files (png/jpg/webp ≤8MB).
 2. After processing, copy or download the markdown tables.
-3. Review the rendered tables below. They are editable so you can correct any values before exporting.
+3. Review the rendered tables below. Each table cell uses an input box so you can correct the values before exporting.
 4. If the output still needs tweaking, edit the prompt and hit **Edit & Retry**.
 
 ## Testing
