@@ -35,8 +35,9 @@ def markdown_looks_like_json(md: str) -> bool:
 DB_PATH = os.path.join(UPLOAD_FOLDER, 'requests.db')
 
 
-def get_db():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+def get_db(path: str = DB_PATH):
+    """Return a SQLite connection to the given ``path``."""
+    conn = sqlite3.connect(path, check_same_thread=False)
     conn.execute('PRAGMA journal_mode=WAL;')
     return conn
 

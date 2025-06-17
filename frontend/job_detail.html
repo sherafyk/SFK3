@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Edit Job {{ job_id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h2>Edit Job {{ job_id }}</h2>
+    <a href="{{ url_for('history') }}">Back</a>
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        {% for r in rows %}
+        <h3>{{ r.filename }}</h3>
+        <label>Prompt:<br>
+            <textarea name="prompt_{{ r.id }}" rows="4" cols="80">{{ r.prompt }}</textarea>
+        </label><br>
+        <label>Output:<br>
+            <textarea name="output_{{ r.id }}" rows="10" cols="80">{{ r.output }}</textarea>
+        </label>
+        <hr>
+        {% endfor %}
+        <button type="submit">Save</button>
+    </form>
+</body>
+</html>

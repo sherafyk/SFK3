@@ -31,8 +31,10 @@ from backend.utils import (
     UPLOAD_FOLDER,
     MODEL,
     MAX_FILE_SIZE_MB,
+    get_db,
 )
 from backend.models import init_db, log_request
+from pathlib import Path
 from backend.cleanup import purge_old_uploads
 from backend import worker
 
@@ -58,6 +60,11 @@ limiter.init_app(app)
 
 init_db()
 purge_old_uploads()
+
+
+def job_db_path(job_id: str) -> str:
+    """Return the SQLite path for the given job."""
+    return os.path.join(UPLOAD_FOLDER, f"{job_id}.db")
 
 
 def vision_pipeline(image_path: str):
@@ -88,6 +95,9 @@ def upload():
             return redirect(request.url)
         files = request.files.getlist('files')
         results = []
+        job_id = generate_job_id()
+        job_path = job_db_path(job_id)
+        init_db(job_path)
         for file in files:
             if file and allowed_file(file.filename):
                 if get_file_size(file) > MAX_FILE_SIZE_MB * 1024 * 1024:
@@ -100,8 +110,7 @@ def upload():
                     prompt, output_text = fut.result()
                 except Exception as e:
                     prompt, output_text = generate_prompt(), str(e)
-                job_id = generate_job_id()
-                log_request(new_name, request.remote_addr, prompt, output_text)
+                log_request(new_name, request.remote_addr, prompt, output_text, db_path=job_path)
                 html_output = convert_markdown(output_text)
                 results.append(
                     {
@@ -130,7 +139,9 @@ def retry(filename):
     except Exception as e:
         output_text = str(e)
     job_id = generate_job_id()
-    log_request(filename, request.remote_addr, prompt, output_text)
+    job_path = job_db_path(job_id)
+    init_db(job_path)
+    log_request(filename, request.remote_addr, prompt, output_text, db_path=job_path)
     html_output = convert_markdown(output_text)
     result = {
         'filename': filename,
@@ -155,6 +166,56 @@ def to_json():
     except Exception as e:
         json_text = str(e)
     return jsonify({'json': json_text})
+
+
+@app.route('/history')
+def history():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    job_files = sorted(Path(UPLOAD_FOLDER).glob('*.db'), key=lambda p: p.stat().st_mtime, reverse=True)
+    jobs = []
+    for f in job_files:
+        with get_db(str(f)) as conn:
+            row = conn.execute(
+                "SELECT filename, timestamp, ip FROM requests ORDER BY id DESC LIMIT 1"
+            ).fetchone()
+        if row:
+            jobs.append({'job_id': f.stem, 'filename': row[0], 'timestamp': row[1], 'ip': row[2]})
+    return render_template('history.html', jobs=jobs)
+
+
+@app.route('/job/<job_id>', methods=['GET', 'POST'])
+def job_detail(job_id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    db_path = job_db_path(job_id)
+    if request.method == 'POST':
+        with get_db(db_path) as conn:
+            rows = conn.execute("SELECT id FROM requests").fetchall()
+            for r in rows:
+                pid = r[0]
+                prompt_val = request.form.get(f'prompt_{pid}', '')
+                output_val = request.form.get(f'output_{pid}', '')
+                conn.execute(
+                    "UPDATE requests SET prompt=?, output=? WHERE id=?",
+                    (prompt_val, output_val, pid),
+                )
+        flash('Job updated')
+        return redirect(url_for('job_detail', job_id=job_id))
+    with get_db(db_path) as conn:
+        rows = conn.execute(
+            "SELECT id, filename, prompt, output FROM requests ORDER BY id"
+        ).fetchall()
+    rows = [
+        {
+            'id': r[0],
+            'filename': r[1],
+            'prompt': r[2],
+            'output': r[3],
+        }
+        for r in rows
+    ]
+    return render_template('job_detail.html', job_id=job_id, rows=rows)
 
 
 @app.route('/logout')
