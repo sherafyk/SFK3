@@ -69,10 +69,11 @@ pytest
 ## Updating
 
 Pull the latest changes and rebuild:
-
+```
+docker-compose down
+```
 ```bash
 git pull
-docker-compose down
 docker-compose up -d --build
 ```
 ### Additional diagnostic checks
