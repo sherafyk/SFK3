@@ -44,7 +44,9 @@ FRONTEND_DIR = os.path.join(BASE_DIR, "..", "frontend")
 app = Flask(__name__, template_folder=FRONTEND_DIR, static_folder=FRONTEND_DIR)
 app.secret_key = os.getenv('SECRET_KEY', os.urandom(24))
 app.config['MAX_CONTENT_LENGTH'] = 8 * 1024 * 1024
-app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SECURE'] = (
+    os.getenv('SESSION_COOKIE_SECURE', 'True').lower() == 'true'
+)
 CSRFProtect(app)
 
 limiter = Limiter(
