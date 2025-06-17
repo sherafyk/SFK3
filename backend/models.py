@@ -14,15 +14,30 @@ def init_db(path: str = DB_PATH):
                 timestamp TEXT,
                 ip TEXT,
                 prompt TEXT,
-                output TEXT
+                output TEXT,
+                json TEXT
             )"""
         )
 
 
-def log_request(filename: str, ip: str, prompt: str, output: str, db_path: str = DB_PATH):
+def log_request(
+    filename: str,
+    ip: str,
+    prompt: str,
+    output: str,
+    db_path: str = DB_PATH,
+    json_text: str = "",
+):
     """Insert a request row into the database at ``db_path``."""
     with get_db(db_path) as conn:
         conn.execute(
-            "INSERT INTO requests (filename, timestamp, ip, prompt, output) VALUES (?, ?, ?, ?, ?)",
-            (filename, datetime.datetime.utcnow().isoformat(), ip, prompt, output),
+            "INSERT INTO requests (filename, timestamp, ip, prompt, output, json) VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                filename,
+                datetime.datetime.utcnow().isoformat(),
+                ip,
+                prompt,
+                output,
+                json_text,
+            ),
         )

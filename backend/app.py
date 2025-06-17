@@ -110,7 +110,13 @@ def upload():
                     prompt, output_text = fut.result()
                 except Exception as e:
                     prompt, output_text = generate_prompt(), str(e)
-                log_request(new_name, request.remote_addr, prompt, output_text, db_path=job_path)
+                log_request(
+                    new_name,
+                    request.remote_addr,
+                    prompt,
+                    output_text,
+                    db_path=job_path,
+                )
                 html_output = convert_markdown(output_text)
                 results.append(
                     {
@@ -141,7 +147,13 @@ def retry(filename):
     job_id = generate_job_id()
     job_path = job_db_path(job_id)
     init_db(job_path)
-    log_request(filename, request.remote_addr, prompt, output_text, db_path=job_path)
+    log_request(
+        filename,
+        request.remote_addr,
+        prompt,
+        output_text,
+        db_path=job_path,
+    )
     html_output = convert_markdown(output_text)
     result = {
         'filename': filename,
@@ -196,15 +208,21 @@ def job_detail(job_id):
                 pid = r[0]
                 prompt_val = request.form.get(f'prompt_{pid}', '')
                 output_val = request.form.get(f'output_{pid}', '')
+                json_val = request.form.get(f'json_{pid}', '')
                 conn.execute(
-                    "UPDATE requests SET prompt=?, output=? WHERE id=?",
-                    (prompt_val, output_val, pid),
+                    "UPDATE requests SET prompt=?, output=?, json=? WHERE id=?",
+                    (
+                        prompt_val,
+                        output_val,
+                        json_val,
+                        pid,
+                    ),
                 )
         flash('Job updated')
         return redirect(url_for('job_detail', job_id=job_id))
     with get_db(db_path) as conn:
         rows = conn.execute(
-            "SELECT id, filename, prompt, output FROM requests ORDER BY id"
+            "SELECT id, filename, prompt, output, json FROM requests ORDER BY id"
         ).fetchall()
     rows = [
         {
@@ -212,6 +230,7 @@ def job_detail(job_id):
             'filename': r[1],
             'prompt': r[2],
             'output': r[3],
+            'json': r[4],
         }
         for r in rows
     ]
