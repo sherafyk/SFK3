@@ -8,3 +8,4 @@ Flask-WTF==1.2.2
 httpx==0.27.2
 python-dotenv==1.1.0
 markdown2==2.5.3
+argon2-cffi==23.1.0
