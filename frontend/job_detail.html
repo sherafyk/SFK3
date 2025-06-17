@@ -6,8 +6,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <div id="progress-container" style="display:none">
+        <div id="progress-bar"></div>
+    </div>
     <h2>Edit Job {{ job_id }}</h2>
     <a href="{{ url_for('history') }}">Back</a>
+    <button type="button" onclick="adminGenerateAllJSON()">Generate JSON For All</button>
     <form method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         {% for r in rows %}
@@ -18,9 +22,15 @@
         <label>Output:<br>
             <textarea name="output_{{ r.id }}" rows="10" cols="80">{{ r.output }}</textarea>
         </label>
+        <br>
+        <label>JSON:<br>
+            <textarea name="json_{{ r.id }}" rows="10" cols="80">{{ r.json }}</textarea>
+        </label>
+        <button type="button" data-json-id="{{ r.id }}" onclick="adminGenerateJSON({{ r.id }})">Generate JSON</button>
         <hr>
         {% endfor %}
         <button type="submit">Save</button>
     </form>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
 </html>

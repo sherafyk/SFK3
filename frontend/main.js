@@ -277,3 +277,28 @@ function tablesToMarkdown(container){
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-editable-table]').forEach(el => makeTableEditable(el));
 });
+
+function adminGenerateJSON(id){
+  startProgress();
+  const md = document.querySelector(`textarea[name='output_${id}']`).value;
+  fetch('/json', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({markdown: md})
+  })
+    .then(r => r.json())
+    .then(data => {
+      const txt = document.querySelector(`textarea[name='json_${id}']`);
+      if (txt) txt.value = data.json;
+    })
+    .finally(() => {
+      stopProgress();
+    });
+}
+
+function adminGenerateAllJSON(){
+  document.querySelectorAll('[data-json-id]').forEach(btn => {
+    const id = btn.dataset.jsonId;
+    adminGenerateJSON(id);
+  });
+}

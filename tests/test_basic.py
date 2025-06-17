@@ -40,3 +40,15 @@ def test_preprocess_image(tmp_path):
     processed = Image.open(img_path)
     assert processed.mode == 'L'
     assert (img_path.with_suffix(img_path.suffix + '.orig')).exists()
+
+
+def test_log_request_saves_json(tmp_path):
+    from backend.models import init_db, log_request
+    from backend.utils import get_db
+
+    db = tmp_path / 't.db'
+    init_db(str(db))
+    log_request('f', '1.1.1.1', 'p', 'o', db_path=str(db), json_text='{"a":1}')
+    with get_db(str(db)) as conn:
+        row = conn.execute('SELECT json FROM requests').fetchone()
+    assert row[0] == '{"a":1}'
