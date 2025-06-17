@@ -72,6 +72,15 @@ git pull
 docker-compose down
 docker-compose up -d --build
 ```
+### Additional diagnostic checks
+
+```
+docker ps
+```
+```
+docker logs sfk3-app-1 --tail=100
+```
+
 
 
 
