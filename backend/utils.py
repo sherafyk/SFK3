@@ -125,9 +125,10 @@ def call_openai(path: str, prompt: str, filename: str) -> str:
             img.save(buf, format="PNG")
             ext = "png"
             b64 = base64.b64encode(buf.getbuffer()).decode()
-        response = openai.chat.completions.create(
-            model=MODEL,
-            messages=[
+
+        params = {
+            "model": MODEL,
+            "messages": [
                 {
                     "role": "user",
                     "content": [
@@ -139,7 +140,22 @@ def call_openai(path: str, prompt: str, filename: str) -> str:
                     ],
                 }
             ],
-        )
+        }
+        if MODEL not in {"o3", "o3-mini", "o4-mini"}:
+            params["temperature"] = 1
+
+        try:
+            response = openai.chat.completions.create(**params)
+        except openai.BadRequestError as e:
+            if (
+                getattr(e, "body", None)
+                and e.body.get("error", {}).get("code") == "unsupported_value"
+                and e.body.get("error", {}).get("param") == "temperature"
+            ):
+                params.pop("temperature", None)
+                response = openai.chat.completions.create(**params)
+            else:
+                raise RuntimeError(f"OpenAI API error: {e}") from e
         return response.choices[0].message.content
     except openai.OpenAIError as e:
         raise RuntimeError(f"OpenAI API error: {e}") from e
@@ -254,14 +270,36 @@ Output only valid JSON."""
 
 
 def call_openai_json(tables: str) -> str:
+    """Convert extracted tables to JSON via a second model call.
+
+    High-reasoning models such as ``o3`` and ``o4-mini`` ignore custom
+    ``temperature`` values.  When using these models the parameter is omitted;
+    otherwise ``temperature`` defaults to ``1``.  If the API still rejects the
+    parameter, the call is retried without it.
+    """
+
     message = tables + "\n\n" + JSON_PROMPT
+    params = {
+        "model": MODEL,
+        "messages": [{"role": "user", "content": message}],
+        "response_format": {"type": "json_object"},
+    }
+    if MODEL not in {"o3", "o3-mini", "o4-mini"}:
+        params["temperature"] = 1
+
     try:
-        response = openai.chat.completions.create(
-            model=MODEL,
-            messages=[{"role": "user", "content": message}],
-            response_format={"type": "json_object"},
-            temperature=0,
-        )
-        return response.choices[0].message.content
+        response = openai.chat.completions.create(**params)
+    except openai.BadRequestError as e:
+        if (
+            getattr(e, "body", None)
+            and e.body.get("error", {}).get("code") == "unsupported_value"
+            and e.body.get("error", {}).get("param") == "temperature"
+        ):
+            params.pop("temperature", None)
+            response = openai.chat.completions.create(**params)
+        else:
+            raise RuntimeError(f"OpenAI API error: {e}") from e
     except openai.OpenAIError as e:
         raise RuntimeError(f"OpenAI API error: {e}") from e
+
+    return response.choices[0].message.content
