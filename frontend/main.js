@@ -239,10 +239,6 @@ function makeTableEditable(container){
   container.querySelectorAll('table').forEach(table => {
     table.classList.add('editable');
     table.querySelectorAll('th, td').forEach(cell => {
-function makeTableEditable(container){
-  container.querySelectorAll('table').forEach(table => {
-    table.classList.add('editable');
-    table.querySelectorAll('th, td').forEach(cell => {
       cell.contentEditable = 'true';
     });
   });
