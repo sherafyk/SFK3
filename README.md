@@ -29,6 +29,8 @@ pip install -r requirements-dev.txt  # adds pytest and other dev tools
 ```
 cp .env.example .env
 ```
+If you are running the app without HTTPS (e.g., on localhost), set
+`SESSION_COOKIE_SECURE=False` in your `.env` file so the login session works.
 3. Build and run with Docker:
 ```bash
 docker-compose up -d --build
