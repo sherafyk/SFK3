@@ -26,6 +26,7 @@ from backend.utils import (
     generate_job_id,
     call_openai,
     call_openai_json,
+    enhance_tank_conditions,
     markdown_looks_like_json,
     convert_markdown,
     UPLOAD_FOLDER,
@@ -64,9 +65,11 @@ def vision_pipeline(image_path: str):
     prompt = generate_prompt()
     md = call_openai(image_path, prompt, os.path.basename(image_path))
     if markdown_looks_like_json(md):
-        return prompt, md
-    json_out = call_openai_json(md)
-    return prompt, json_out
+        json_out = md
+    else:
+        json_out = call_openai_json(md)
+    enhanced = enhance_tank_conditions(json_out)
+    return prompt, enhanced
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -154,6 +157,7 @@ def to_json():
     markdown_tables = data.get('markdown', '')
     try:
         json_text = call_openai_json(markdown_tables)
+        json_text = enhance_tank_conditions(json_text)
     except Exception as e:
         json_text = str(e)
     return jsonify({'json': json_text})

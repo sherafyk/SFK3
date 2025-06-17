@@ -1,9 +1,16 @@
 import sys, pathlib, json
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 from unittest.mock import patch, MagicMock, ANY
-from backend.utils import call_openai_json, markdown_looks_like_json, MODEL
+from backend.utils import (
+    call_openai_json,
+    markdown_looks_like_json,
+    enhance_tank_conditions,
+    MODEL,
+)
 import openai
 import os
+import math
+import pytest
 
 
 def test_call_openai_json_valid_json():
@@ -48,3 +55,38 @@ def test_markdown_looks_like_json():
     bad = 'not json'
     assert markdown_looks_like_json(good)
     assert not markdown_looks_like_json(bad)
+
+
+def test_enhance_tank_conditions():
+    data = {
+        "tankConditions": {
+            "arrival": [
+                {
+                    "tank": "1",
+                    "productName": "Prod",
+                    "api": 10.0,
+                    "ullageFt": 0,
+                    "ullageIn": 0,
+                    "tempF": 70.0,
+                    "waterBbls": 0,
+                    "grossBbls": 0,
+                    "netBbls": 0,
+                    "metricTons": 0,
+                }
+            ],
+            "departure": [],
+        },
+        "productsDischarged": [],
+        "eventTimeline": [],
+        "draftReadings": [],
+    }
+    result = enhance_tank_conditions(json.dumps(data))
+    obj = json.loads(result)
+    tank = obj["tankConditions"]["arrival"][0]
+    assert tank["changeTemp"] == 10.0
+    assert tank["specificG"] == pytest.approx(1.0)
+    assert tank["densityKgm3"] == pytest.approx(999.016)
+    assert tank["alpha"] == pytest.approx(0.0003744427624)
+    assert tank["exp"] == pytest.approx(math.e)
+    assert tank["VCF"] == pytest.approx(0.99625139939)
+
