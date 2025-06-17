@@ -95,3 +95,17 @@ def test_job_detail_upgrades_schema(client, tmp_path):
     with sqlite3.connect(db_path) as conn_check:
         cols = [r[1] for r in conn_check.execute('PRAGMA table_info(requests)')]
     assert 'json' in cols
+
+
+def test_delete_job(client, tmp_path):
+    client.post('/', data={'password': 'API2025'}, follow_redirects=True)
+    from pathlib import Path
+    from backend.utils import UPLOAD_FOLDER
+    from backend.models import init_db
+
+    db_path = Path(UPLOAD_FOLDER) / 'del.db'
+    init_db(str(db_path))
+
+    rv = client.post(f'/delete_job/{db_path.stem}', follow_redirects=True)
+    assert rv.status_code == 200
+    assert not db_path.exists()
