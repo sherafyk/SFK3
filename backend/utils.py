@@ -7,6 +7,7 @@ import shutil
 import sqlite3
 import json
 import re
+import math
 from werkzeug.utils import secure_filename
 import openai
 from markdown2 import markdown
@@ -303,3 +304,54 @@ def call_openai_json(tables: str) -> str:
         raise RuntimeError(f"OpenAI API error: {e}") from e
 
     return response.choices[0].message.content
+
+
+def enhance_tank_conditions(json_text: str) -> str:
+    """Add calculated fields to each tank in the JSON structure.
+
+    Parameters
+    ----------
+    json_text: str
+        JSON string following the TankReport schema.
+
+    Returns
+    -------
+    str
+        Updated JSON string with additional calculated fields for each tank.
+    """
+
+    try:
+        data = json.loads(json_text)
+    except json.JSONDecodeError:
+        return json_text
+
+    tank_conditions = data.get("tankConditions", {})
+    for phase in ("arrival", "departure"):
+        tanks = tank_conditions.get(phase, [])
+        if not isinstance(tanks, list):
+            continue
+        for tank in tanks:
+            try:
+                temp_f = float(tank.get("tempF", 0))
+                api = float(tank.get("api", 0))
+            except (TypeError, ValueError):
+                # Skip tanks with invalid numeric values
+                continue
+
+            change_temp = temp_f - 60
+            specific_g = 141.5 / (api + 131.5) if (api + 131.5) != 0 else 0
+            density = specific_g * 999.016
+            if density != 0:
+                alpha = (103.8720 / (density ** 2)) + (0.2701 / density)
+            else:
+                alpha = 0
+            vcf = math.exp(-alpha * change_temp * (1 + 0.8 * alpha * change_temp))
+
+            tank["changeTemp"] = change_temp
+            tank["specificG"] = specific_g
+            tank["densityKgm3"] = density
+            tank["alpha"] = alpha
+            tank["exp"] = math.e
+            tank["VCF"] = vcf
+
+    return json.dumps(data)
