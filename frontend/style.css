@@ -4,14 +4,13 @@ body { font-family: Arial, sans-serif; margin:40px; }
 pre { background:#f2f2f2; padding:10px; }
 table { border-collapse:collapse; margin-bottom:20px; }
 th, td { border:1px solid #ccc; padding:4px 8px; }
-table.editable td[contenteditable],
-table.editable th[contenteditable] {
-  min-width:40px;
-  border:1px solid #ccc;
+table.editable input {
+  width:100%;
+  border:none;
   padding:4px 8px;
+  box-sizing:border-box;
 }
-table.editable td[contenteditable]:focus,
-table.editable th[contenteditable]:focus {
+table.editable input:focus {
   outline:2px solid #4caf50;
 }
 .edit-note { font-style: italic; color: #555; margin: 5px 0; }

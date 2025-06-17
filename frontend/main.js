@@ -236,10 +236,19 @@ function downloadJson(i){
 }
 
 function makeTableEditable(container){
-  container.querySelectorAll('table').forEach(table => {
+  container.querySelectorAll('table').forEach((table, tIdx) => {
     table.classList.add('editable');
-    table.querySelectorAll('th, td').forEach(cell => {
-      cell.contentEditable = 'true';
+    table.querySelectorAll('tr').forEach((row, rIdx) => {
+      row.querySelectorAll('th, td').forEach((cell, cIdx) => {
+        let text = cell.textContent.trim();
+        cell.textContent = '';
+        let input = document.createElement('input');
+        input.type = 'text';
+        input.value = text;
+        input.name = `t${tIdx}_r${rIdx}_c${cIdx}`;
+        input.id = `t${tIdx}_r${rIdx}_c${cIdx}`;
+        cell.appendChild(input);
+      });
     });
   });
 }
@@ -251,7 +260,10 @@ function tablesToMarkdown(container){
     let rows = table.querySelectorAll('tr');
     rows.forEach((row, idx) => {
       let cells = row.querySelectorAll('th, td');
-      let values = Array.from(cells).map(c => c.textContent.trim().replace(/\|/g, '\\|'));
+      let values = Array.from(cells).map(c => {
+        let inp = c.querySelector('input');
+        return (inp ? inp.value : c.textContent.trim()).replace(/\|/g, '\\|');
+      });
       lines.push('|' + values.join('|') + '|');
       if(idx === 0){
         lines.push('|' + values.map(()=>'---').join('|') + '|');
