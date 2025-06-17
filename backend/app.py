@@ -201,6 +201,14 @@ def job_detail(job_id):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     db_path = job_db_path(job_id)
+    if not os.path.exists(db_path):
+        return (
+            render_template(
+                "error.html",
+                message="Job not found",
+            ),
+            404,
+        )
     if request.method == 'POST':
         with get_db(db_path) as conn:
             rows = conn.execute("SELECT id FROM requests").fetchall()

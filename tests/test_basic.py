@@ -17,6 +17,7 @@ def client():
     os.environ['UPLOAD_FOLDER'] = db_dir
     app.config['TESTING'] = True
     app.config['WTF_CSRF_ENABLED'] = False
+    os.makedirs(db_dir, exist_ok=True)
     init_db()
     with app.test_client() as client:
         yield client
@@ -52,3 +53,10 @@ def test_log_request_saves_json(tmp_path):
     with get_db(str(db)) as conn:
         row = conn.execute('SELECT json FROM requests').fetchone()
     assert row[0] == '{"a":1}'
+
+
+def test_job_detail_missing_db(client):
+    client.post('/', data={'password': 'API2025'}, follow_redirects=True)
+    rv = client.get('/job/doesnotexist')
+    assert rv.status_code == 404
+    assert b'Job not found' in rv.data
