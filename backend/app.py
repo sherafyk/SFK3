@@ -196,6 +196,20 @@ def history():
     return render_template('history.html', jobs=jobs)
 
 
+@app.route('/delete_job/<job_id>', methods=['POST'])
+def delete_job(job_id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    db_path = job_db_path(job_id)
+    if os.path.exists(db_path):
+        try:
+            os.remove(db_path)
+        except OSError:
+            pass
+    flash('Job deleted')
+    return redirect(url_for('history'))
+
+
 @app.route('/job/<job_id>', methods=['GET', 'POST'])
 def job_detail(job_id):
     if not session.get('logged_in'):
