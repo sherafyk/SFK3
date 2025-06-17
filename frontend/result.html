@@ -25,7 +25,7 @@
         <textarea name="prompt" rows="6" cols="80">{{ r.prompt }}</textarea><br>
         <button type="submit">Edit & Retry</button>
     </form>
-    <div>{{ r.html | safe }}</div>
+    <div id="table{{ loop.index }}" data-editable-table>{{ r.html | safe }}</div>
     <hr>
     {% endfor %}
 <script src="{{ url_for('static', filename='main.js') }}"></script>
