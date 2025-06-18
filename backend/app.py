@@ -41,6 +41,10 @@ from backend import worker
 PASS_HASH = argon2.hash(os.environ['APP_PASSWORD'])
 RATE_LIMIT_PER_HOUR = int(os.getenv('RATE_LIMIT_PER_HOUR', 50))
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')
+try:
+    Redis.from_url(REDIS_URL).ping()
+except Exception:
+    REDIS_URL = 'memory://'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "..", "frontend")
 app = Flask(__name__, template_folder=FRONTEND_DIR, static_folder=FRONTEND_DIR)
