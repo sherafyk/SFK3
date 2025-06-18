@@ -4,11 +4,13 @@
     <meta charset="utf-8">
     <title>Results</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
     <div id="progress-container" style="display:none">
         <div id="progress-bar"></div>
     </div>
+    <div id="status-message"></div>
     <a href="{{ url_for('upload') }}">Back</a> |
     <a href="{{ url_for('history') }}">Admin</a>
     {% for r in results %}

@@ -18,6 +18,25 @@ let rotateRightBtn = document.getElementById('rotateRight');
 let cropper;
 let currentIndex = null;
 
+function getCSRFToken(){
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  if(meta) return meta.getAttribute('content');
+  const inp = document.querySelector('input[name="csrf_token"]');
+  return inp ? inp.value : '';
+}
+
+function showStatus(message){
+  let el = document.getElementById('status-message');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'status-message';
+    document.body.prepend(el);
+  }
+  el.textContent = message;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
 if (dropArea) {
   ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
     dropArea.addEventListener(eventName, preventDefaults, false);
@@ -205,7 +224,10 @@ function exportJSON(i){
   startProgress();
   fetch('/json', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCSRFToken()
+    },
     body: JSON.stringify({markdown: md})
   })
     .then(r => r.json())
@@ -215,6 +237,7 @@ function exportJSON(i){
       txt.value = data.json;
       document.getElementById('copyJson'+i).style.display = 'inline';
       document.getElementById('downloadJson'+i).style.display = 'inline';
+      showStatus('JSON generated');
     })
     .finally(() => {
       stopProgress();
@@ -283,13 +306,17 @@ function adminGenerateJSON(id){
   const md = document.querySelector(`textarea[name='output_${id}']`).value;
   fetch('/json', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCSRFToken()
+    },
     body: JSON.stringify({markdown: md})
   })
     .then(r => r.json())
     .then(data => {
       const txt = document.querySelector(`textarea[name='json_${id}']`);
       if (txt) txt.value = data.json;
+      showStatus('JSON generated');
     })
     .finally(() => {
       stopProgress();
