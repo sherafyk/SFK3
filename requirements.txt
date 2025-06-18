@@ -8,3 +8,4 @@ redis
 Flask-WTF
 passlib
 argon2-cffi
+bleach
