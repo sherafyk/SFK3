@@ -90,3 +90,13 @@ def test_enhance_tank_conditions():
     assert tank["exp"] == pytest.approx(math.e)
     assert tank["VCF"] == pytest.approx(0.99625139939)
 
+
+def test_allowed_file_ignores_spaces(monkeypatch):
+    monkeypatch.setenv("ALLOWED_EXTENSIONS", "png, jpg , jpeg ")
+    import importlib
+    from backend import utils as utils_reload
+    importlib.reload(utils_reload)
+    assert utils_reload.allowed_file("test.JPG")
+    assert utils_reload.allowed_file("pic.jpeg")
+    assert not utils_reload.allowed_file("doc.txt")
+

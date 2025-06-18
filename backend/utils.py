@@ -14,7 +14,10 @@ from markdown2 import markdown
 from PIL import Image, ImageOps
 
 UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join('backend', 'data'))
-ALLOWED_EXTENSIONS = set(os.getenv('ALLOWED_EXTENSIONS', 'png,jpg,jpeg,webp').split(','))
+ALLOWED_EXTENSIONS = {
+    ext.strip().lower()
+    for ext in os.getenv('ALLOWED_EXTENSIONS', 'png,jpg,jpeg,webp').split(',')
+}
 MAX_FILE_SIZE_MB = int(os.getenv('MAX_FILE_SIZE_MB', 8))
 MODEL = os.getenv('MODEL', 'o4-mini')
 
