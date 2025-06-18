@@ -105,6 +105,7 @@ function previewFiles(files) {
     URL.revokeObjectURL(img.src);
   });
   gallery.innerHTML = '';
+  const frag = document.createDocumentFragment();
   filesToUpload.forEach((file, idx) => {
     let div = document.createElement('div');
     div.className = 'preview';
@@ -116,8 +117,9 @@ function previewFiles(files) {
     btn.addEventListener('click', () => openEditor(idx));
     div.appendChild(img);
     div.appendChild(btn);
-    gallery.appendChild(div);
+    frag.appendChild(div);
   });
+  gallery.appendChild(frag);
 }
 
 function openEditor(idx){
