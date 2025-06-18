@@ -355,4 +355,4 @@ def enhance_tank_conditions(json_text: str) -> str:
             tank["exp"] = math.e
             tank["VCF"] = vcf
 
-    return json.dumps(data)
+    return json.dumps(data, indent=2)

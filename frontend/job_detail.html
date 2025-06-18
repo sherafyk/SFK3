@@ -32,6 +32,7 @@
             <textarea name="json_{{ r.id }}" rows="10" cols="80">{{ r.json }}</textarea>
         </label>
         <button type="button" data-json-id="{{ r.id }}" onclick="adminGenerateJSON({{ r.id }})">Generate JSON</button>
+        <button type="button" onclick="prettyPrintTextarea('json_{{ r.id }}')">Pretty Print JSON</button>
         <hr>
         {% endfor %}
         <button type="submit">Save</button>

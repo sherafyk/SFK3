@@ -234,9 +234,15 @@ function exportJSON(i){
     .then(data => {
       let txt = document.getElementById('json'+i);
       txt.style.display = 'block';
-      txt.value = data.json;
+      try {
+        const obj = JSON.parse(data.json);
+        txt.value = JSON.stringify(obj, null, 2);
+      } catch {
+        txt.value = data.json;
+      }
       document.getElementById('copyJson'+i).style.display = 'inline';
       document.getElementById('downloadJson'+i).style.display = 'inline';
+      document.getElementById('prettyJson'+i).style.display = 'inline';
       showStatus('JSON generated');
     })
     .finally(() => {
@@ -256,6 +262,15 @@ function downloadJson(i){
   a.href = URL.createObjectURL(blob);
   a.download = 'result_'+i+'.json';
   a.click();
+}
+
+function prettyPrint(i){
+  let el = document.getElementById('json'+i);
+  try{
+    el.value = JSON.stringify(JSON.parse(el.value), null, 2);
+  }catch(e){
+    alert('Invalid JSON');
+  }
 }
 
 function makeTableEditable(container){
@@ -321,6 +336,16 @@ function adminGenerateJSON(id){
     .finally(() => {
       stopProgress();
     });
+}
+
+function prettyPrintTextarea(name){
+  const txt = document.querySelector(`textarea[name='${name}']`);
+  if(!txt) return;
+  try{
+    txt.value = JSON.stringify(JSON.parse(txt.value), null, 2);
+  }catch(e){
+    alert('Invalid JSON');
+  }
 }
 
 function adminGenerateAllJSON(){
