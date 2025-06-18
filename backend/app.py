@@ -33,7 +33,7 @@ from backend.utils import (
     MAX_FILE_SIZE_MB,
     get_db,
 )
-from backend.models import init_db, log_request
+from backend.models import init_db, log_request, get_job_name, set_job_name
 from pathlib import Path
 from backend.cleanup import purge_old_uploads
 from backend import worker
@@ -191,8 +191,9 @@ def history():
             row = conn.execute(
                 "SELECT filename, timestamp, ip FROM requests ORDER BY id DESC LIMIT 1"
             ).fetchone()
+            name_row = conn.execute("SELECT name FROM jobmeta").fetchone()
         if row:
-            jobs.append({'job_id': f.stem, 'filename': row[0], 'timestamp': row[1], 'ip': row[2]})
+            jobs.append({'job_id': f.stem, 'filename': row[0], 'timestamp': row[1], 'ip': row[2], 'job_name': name_row[0] if name_row else ''})
     return render_template('history.html', jobs=jobs)
 
 
@@ -229,6 +230,8 @@ def job_detail(job_id):
     init_db(db_path)
 
     if request.method == 'POST':
+        new_name = request.form.get('job_name', '')
+        set_job_name(new_name, db_path=db_path)
         with get_db(db_path) as conn:
             rows = conn.execute("SELECT id FROM requests").fetchall()
             for r in rows:
@@ -251,6 +254,7 @@ def job_detail(job_id):
         rows = conn.execute(
             "SELECT id, filename, prompt, output, json FROM requests ORDER BY id"
         ).fetchall()
+    job_name = get_job_name(db_path)
     rows = [
         {
             'id': r[0],
@@ -261,7 +265,7 @@ def job_detail(job_id):
         }
         for r in rows
     ]
-    return render_template('job_detail.html', job_id=job_id, rows=rows)
+    return render_template('job_detail.html', job_id=job_id, rows=rows, job_name=job_name)
 
 
 @app.route('/logout')

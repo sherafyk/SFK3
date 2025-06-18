@@ -14,6 +14,9 @@
     <button type="button" onclick="adminGenerateAllJSON()">Generate JSON For All</button>
     <form method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <label>Job Name:
+            <input type="text" name="job_name" value="{{ job_name }}">
+        </label>
         {% for r in rows %}
         <h3>{{ r.filename }}</h3>
         <label>Prompt:<br>

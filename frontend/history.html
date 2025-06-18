@@ -9,7 +9,7 @@
     <h2>Job History</h2>
     <a href="{{ url_for('upload') }}">Back</a>
     <table>
-        <tr><th></th><th>Job</th><th>Timestamp</th><th>Filename</th><th>IP</th></tr>
+        <tr><th></th><th>Job</th><th>Name</th><th>Timestamp</th><th>Filename</th><th>IP</th></tr>
         {% for job in jobs %}
         <tr>
             <td>
@@ -19,6 +19,7 @@
                 </form>
             </td>
             <td><a href="{{ url_for('job_detail', job_id=job.job_id) }}">{{ job.job_id }}</a></td>
+            <td>{{ job.job_name }}</td>
             <td>{{ job.timestamp }}</td>
             <td>{{ job.filename }}</td>
             <td>{{ job.ip }}</td>
