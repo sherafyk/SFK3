@@ -159,7 +159,10 @@ def call_openai(path: str, prompt: str, filename: str) -> str:
                 and e.body.get("error", {}).get("param") == "temperature"
             ):
                 params.pop("temperature", None)
-                response = openai.chat.completions.create(**params)
+                try:
+                    response = openai.chat.completions.create(**params)
+                except openai.OpenAIError as e:
+                    raise RuntimeError(f"OpenAI API error: {e}") from e
             else:
                 raise RuntimeError(f"OpenAI API error: {e}") from e
         return response.choices[0].message.content
@@ -321,7 +324,10 @@ def call_openai_json(tables: str) -> str:
             and e.body.get("error", {}).get("param") == "temperature"
         ):
             params.pop("temperature", None)
-            response = openai.chat.completions.create(**params)
+            try:
+                response = openai.chat.completions.create(**params)
+            except openai.OpenAIError as e:
+                raise RuntimeError(f"OpenAI API error: {e}") from e
         else:
             raise RuntimeError(f"OpenAI API error: {e}") from e
     except openai.OpenAIError as e:

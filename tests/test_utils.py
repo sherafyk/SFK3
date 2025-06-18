@@ -2,6 +2,7 @@ import sys, pathlib, json
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 from unittest.mock import patch, MagicMock, ANY
 from backend.utils import (
+    call_openai,
     call_openai_json,
     markdown_looks_like_json,
     enhance_tank_conditions,
@@ -18,11 +19,13 @@ def test_call_openai_json_valid_json():
     os.environ['OPENAI_API_KEY'] = 'test'
     mock_resp = MagicMock()
     mock_resp.choices = [MagicMock(message=MagicMock(content='{"foo": "bar"}'))]
-    with patch('backend.utils.openai.chat.completions.create', return_value=mock_resp) as mock_create:
+    chat_mock = MagicMock()
+    chat_mock.completions.create.return_value = mock_resp
+    with patch('backend.utils.openai.chat', chat_mock):
         result = call_openai_json('tables')
         json_obj = json.loads(result)  # Should not raise
         assert json_obj == {"foo": "bar"}
-        mock_create.assert_called_once_with(
+        chat_mock.completions.create.assert_called_once_with(
             model=MODEL,
             messages=[{"role": "user", "content": ANY}],
             response_format={"type": "json_object"},
@@ -38,16 +41,17 @@ def test_call_openai_json_retry_without_temperature():
         response=MagicMock(status_code=400, headers={}, request=None),
         body={"error": {"code": "unsupported_value", "param": "temperature"}},
     )
+    chat_mock = MagicMock()
+    chat_mock.completions.create.side_effect = [error, mock_resp]
     with patch('backend.utils.MODEL', 'gpt-3.5'), patch(
-        'backend.utils.openai.chat.completions.create',
-        side_effect=[error, mock_resp],
-    ) as mock_create:
+        'backend.utils.openai.chat', chat_mock
+    ):
         result = call_openai_json('tables')
         assert json.loads(result) == {"foo": "bar"}
-        assert mock_create.call_count == 2
-        first_args = mock_create.call_args_list[0].kwargs
+        assert chat_mock.completions.create.call_count == 2
+        first_args = chat_mock.completions.create.call_args_list[0].kwargs
         assert first_args['temperature'] == 1
-        second_args = mock_create.call_args_list[1].kwargs
+        second_args = chat_mock.completions.create.call_args_list[1].kwargs
         assert 'temperature' not in second_args
 
 
@@ -93,6 +97,44 @@ def test_enhance_tank_conditions():
 
 
 
+def test_call_openai_json_error_on_second_call():
+    os.environ['OPENAI_API_KEY'] = 'test'
+    bad_req = openai.BadRequestError(
+        message="bad",
+        response=MagicMock(status_code=400, headers={}, request=None),
+        body={"error": {"code": "unsupported_value", "param": "temperature"}},
+    )
+    chat_mock = MagicMock()
+    chat_mock.completions.create.side_effect = [bad_req, openai.OpenAIError('boom')]
+    with patch('backend.utils.MODEL', 'gpt-3.5'), patch(
+        'backend.utils.openai.chat', chat_mock
+    ):
+        with pytest.raises(RuntimeError):
+            call_openai_json('tables')
+        assert chat_mock.completions.create.call_count == 2
+
+
+def test_call_openai_error_on_second_call(tmp_path):
+    from PIL import Image
+
+    os.environ['OPENAI_API_KEY'] = 'test'
+    img = tmp_path / 'img.png'
+    Image.new('RGB', (10, 10), 'red').save(img)
+    bad_req = openai.BadRequestError(
+        message="bad",
+        response=MagicMock(status_code=400, headers={}, request=None),
+        body={"error": {"code": "unsupported_value", "param": "temperature"}},
+    )
+    chat_mock = MagicMock()
+    chat_mock.completions.create.side_effect = [bad_req, openai.OpenAIError('boom')]
+    with patch('backend.utils.MODEL', 'gpt-3.5'), patch(
+        'backend.utils.openai.chat', chat_mock
+    ):
+        with pytest.raises(RuntimeError):
+            call_openai(str(img), 'p', img.name)
+        assert chat_mock.completions.create.call_count == 2
+
+
 def test_allowed_file_ignores_spaces(monkeypatch):
     monkeypatch.setenv("ALLOWED_EXTENSIONS", "png, jpg , jpeg ")
     import importlib
@@ -107,4 +149,5 @@ def test_convert_markdown_sanitizes_script():
     html = convert_markdown(md)
     assert "<script>" not in html
     assert "<table>" in html
+
 
