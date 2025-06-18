@@ -195,6 +195,9 @@ def history():
     job_files = sorted(Path(UPLOAD_FOLDER).glob('*.db'), key=lambda p: p.stat().st_mtime, reverse=True)
     jobs = []
     for f in job_files:
+        # Older job databases may predate the ``jobmeta`` table. ``init_db``
+        # upgrades the schema in-place so querying ``jobmeta`` doesn't fail.
+        init_db(str(f))
         with get_db(str(f)) as conn:
             row = conn.execute(
                 "SELECT filename, timestamp, ip FROM requests ORDER BY id DESC LIMIT 1"
