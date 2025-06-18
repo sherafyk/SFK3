@@ -6,6 +6,7 @@ from backend.utils import (
     call_openai_json,
     markdown_looks_like_json,
     enhance_tank_conditions,
+    convert_markdown,
     MODEL,
 )
 import openai
@@ -95,6 +96,7 @@ def test_enhance_tank_conditions():
     assert tank["VCF"] == pytest.approx(0.99625139939)
 
 
+
 def test_call_openai_json_error_on_second_call():
     os.environ['OPENAI_API_KEY'] = 'test'
     bad_req = openai.BadRequestError(
@@ -131,4 +133,21 @@ def test_call_openai_error_on_second_call(tmp_path):
         with pytest.raises(RuntimeError):
             call_openai(str(img), 'p', img.name)
         assert chat_mock.completions.create.call_count == 2
+
+
+def test_allowed_file_ignores_spaces(monkeypatch):
+    monkeypatch.setenv("ALLOWED_EXTENSIONS", "png, jpg , jpeg ")
+    import importlib
+    from backend import utils as utils_reload
+    importlib.reload(utils_reload)
+    assert utils_reload.allowed_file("test.JPG")
+    assert utils_reload.allowed_file("pic.jpeg")
+    assert not utils_reload.allowed_file("doc.txt")
+
+def test_convert_markdown_sanitizes_script():
+    md = "Bad<script>alert('x')</script>\n\n|A|B|\n|--|--|\n|1|2|"
+    html = convert_markdown(md)
+    assert "<script>" not in html
+    assert "<table>" in html
+
 

@@ -11,10 +11,14 @@ import math
 from werkzeug.utils import secure_filename
 import openai
 from markdown2 import markdown
+import bleach
 from PIL import Image, ImageOps
 
 UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join('backend', 'data'))
-ALLOWED_EXTENSIONS = set(os.getenv('ALLOWED_EXTENSIONS', 'png,jpg,jpeg,webp').split(','))
+ALLOWED_EXTENSIONS = {
+    ext.strip().lower()
+    for ext in os.getenv('ALLOWED_EXTENSIONS', 'png,jpg,jpeg,webp').split(',')
+}
 MAX_FILE_SIZE_MB = int(os.getenv('MAX_FILE_SIZE_MB', 8))
 MODEL = os.getenv('MODEL', 'o4-mini')
 
@@ -167,8 +171,27 @@ def call_openai(path: str, prompt: str, filename: str) -> str:
 
 
 def convert_markdown(md: str) -> str:
-    """Convert markdown text to HTML with table support."""
-    return markdown(md, extras=["tables"])
+    """Convert markdown text to sanitized HTML with table support."""
+    html = markdown(md, extras=["tables"])
+    allowed_tags = set(bleach.sanitizer.ALLOWED_TAGS).union(
+        {
+            "p",
+            "br",
+            "pre",
+            "code",
+            "table",
+            "thead",
+            "tbody",
+            "tr",
+            "th",
+            "td",
+        }
+    )
+    return bleach.clean(
+        html,
+        tags=allowed_tags,
+        attributes=bleach.sanitizer.ALLOWED_ATTRIBUTES,
+    )
 
 
 JSON_PROMPT = """Please convert the tables below into a single JSON object that strictly follows this JSON Schema:
