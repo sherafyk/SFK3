@@ -119,3 +119,30 @@ def test_login_rate_limit(client):
         assert rv.status_code == 200
     rv = client.post('/', data={'password': 'wrong'})
     assert rv.status_code == 429
+
+
+def test_update_json_endpoint(client):
+    from backend.app import limiter
+    limiter.reset()
+    client.post('/', data={'password': 'API2025'}, follow_redirects=True)
+    from pathlib import Path
+    from backend.utils import UPLOAD_FOLDER, get_db
+    from backend.models import init_db
+
+    db_path = Path(UPLOAD_FOLDER) / 'u.db'
+    init_db(str(db_path))
+    with get_db(str(db_path)) as conn:
+        conn.execute(
+            "INSERT INTO requests (filename, timestamp, ip, prompt, output, json) VALUES (?,?,?,?,?,?)",
+            ('f', 't', '1.1.1.1', 'p', 'o', '{"a":1}')
+        )
+        req_id = conn.execute("SELECT id FROM requests").fetchone()[0]
+
+    rv = client.post(f'/update_json/{db_path.stem}/{req_id}', json={'json': '{"b":2}'})
+    assert rv.status_code == 200
+    with get_db(str(db_path)) as conn:
+        row = conn.execute('SELECT json FROM requests WHERE id=?', (req_id,)).fetchone()
+    assert row[0] == '{"b":2}'
+
+    rv = client.post(f'/update_json/{db_path.stem}/{req_id}', json={'json': '{bad'})
+    assert rv.status_code == 400

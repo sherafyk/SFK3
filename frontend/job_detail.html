@@ -4,9 +4,10 @@
     <meta charset="utf-8">
     <title>Edit Job {{ job_id }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsoneditor@9.10.0/dist/jsoneditor.min.css">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
-<body>
+<body data-job-id="{{ job_id }}">
     <div id="progress-container" style="display:none">
         <div id="progress-bar"></div>
     </div>
@@ -33,10 +34,20 @@
         </label>
         <button type="button" data-json-id="{{ r.id }}" onclick="adminGenerateJSON({{ r.id }})">Generate JSON</button>
         <button type="button" onclick="prettyPrintTextarea('json_{{ r.id }}')">Pretty Print JSON</button>
+        <button type="button" onclick="openJSONEditor({{ r.id }})">Edit JSON</button>
         <hr>
         {% endfor %}
         <button type="submit">Save</button>
     </form>
+    <div id="json-modal" class="modal">
+        <div class="modal-content">
+            <div id="jsoneditor" style="height:400px;"></div>
+            <pre id="json-preview"></pre>
+            <button type="button" id="json-save-btn">Save</button>
+            <button type="button" id="json-cancel-btn">Cancel</button>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/jsoneditor@9.10.0/dist/jsoneditor.min.js"></script>
     <script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
 </html>

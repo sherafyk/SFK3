@@ -283,6 +283,27 @@ def job_detail(job_id):
     return render_template('job_detail.html', job_id=job_id, rows=rows, job_name=job_name)
 
 
+@app.route('/update_json/<job_id>/<int:req_id>', methods=['POST'])
+def update_json(job_id, req_id):
+    """Update the stored JSON for a single request row."""
+    if not session.get('logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    data = request.get_json(silent=True) or {}
+    json_text = data.get('json', '')
+    try:
+        json.loads(json_text)
+    except json.JSONDecodeError as e:
+        return jsonify({'error': 'Invalid JSON', 'message': str(e)}), 400
+
+    db_path = job_db_path(job_id)
+    if not os.path.exists(db_path):
+        return jsonify({'error': 'Job not found'}), 404
+    init_db(db_path)
+    with get_db(db_path) as conn:
+        conn.execute('UPDATE requests SET json=? WHERE id=?', (json_text, req_id))
+    return jsonify({'status': 'ok'})
+
+
 @app.route('/logout')
 def logout():
     session.clear()
