@@ -174,9 +174,11 @@ function closeEditor(){
   if(cropper){ cropper.destroy(); cropper = null; }
 }
 
-zoomRange.oninput = () => {
-  if(cropper) cropper.zoomTo(parseFloat(zoomRange.value));
-};
+if(zoomRange){
+  zoomRange.oninput = () => {
+    if(cropper) cropper.zoomTo(parseFloat(zoomRange.value));
+  };
+}
 
 let filterFrame;
 function updateFilters(){
@@ -185,8 +187,12 @@ function updateFilters(){
     editorImg.style.filter = `brightness(${brightnessRange.value}) contrast(${contrastRange.value})`;
   });
 }
-brightnessRange.oninput = updateFilters;
-contrastRange.oninput = updateFilters;
+if(brightnessRange){
+  brightnessRange.oninput = updateFilters;
+}
+if(contrastRange){
+  contrastRange.oninput = updateFilters;
+}
 rotateLeftBtn && (rotateLeftBtn.onclick = () => { if(cropper) cropper.rotate(-90); });
 rotateRightBtn && (rotateRightBtn.onclick = () => { if(cropper) cropper.rotate(90); });
 
