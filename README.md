@@ -31,6 +31,9 @@ cp .env.example .env
 ```
 If you are running the app without HTTPS (e.g., on localhost), set
 `SESSION_COOKIE_SECURE=False` in your `.env` file so the login session works.
+Redis is used to persist rate-limit state. Ensure `REDIS_URL` points to your
+Redis server (for Docker Compose this is typically `redis://redis:6379`). If no
+Redis server is reachable, the app falls back to an in-memory limiter.
 3. Build and run with Docker:
 ```bash
 docker-compose up -d --build
