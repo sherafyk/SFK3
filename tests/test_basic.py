@@ -109,3 +109,13 @@ def test_delete_job(client, tmp_path):
     rv = client.post(f'/delete_job/{db_path.stem}', follow_redirects=True)
     assert rv.status_code == 200
     assert not db_path.exists()
+
+
+def test_login_rate_limit(client):
+    from backend.app import limiter, RATE_LIMIT_PER_HOUR
+    limiter.reset()
+    for _ in range(RATE_LIMIT_PER_HOUR):
+        rv = client.post('/', data={'password': 'wrong'})
+        assert rv.status_code == 200
+    rv = client.post('/', data={'password': 'wrong'})
+    assert rv.status_code == 429

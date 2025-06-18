@@ -83,6 +83,7 @@ def vision_pipeline(image_path: str):
 
 
 @app.route('/', methods=['GET', 'POST'])
+@limiter.limit(f"{RATE_LIMIT_PER_HOUR}/hour")
 def login():
     if request.method == 'POST':
         submitted_pw = request.form.get('password', '')
