@@ -386,3 +386,64 @@ function adminGenerateAllJSON(){
     adminGenerateJSON(id);
   });
 }
+
+let jsonEditor;
+let currentTextarea;
+let currentRowId;
+
+function openJSONEditor(id){
+  currentRowId = id;
+  currentTextarea = document.querySelector(`textarea[name='json_${id}']`);
+  if(!currentTextarea) return;
+  let obj;
+  try{
+    obj = currentTextarea.value ? JSON.parse(currentTextarea.value) : {};
+  }catch(e){
+    alert('Invalid JSON');
+    return;
+  }
+  const container = document.getElementById('jsoneditor');
+  if(!jsonEditor){
+    jsonEditor = new JSONEditor(container, {mode: 'tree'});
+    jsonEditor.on('change', () => {
+      try{
+        const o = jsonEditor.get();
+        document.getElementById('json-preview').textContent = JSON.stringify(o, null, 2);
+      }catch{}
+    });
+  }
+  jsonEditor.set(obj);
+  document.getElementById('json-preview').textContent = JSON.stringify(obj, null, 2);
+  document.getElementById('json-modal').style.display = 'flex';
+}
+
+function closeJSONEditor(){
+  document.getElementById('json-modal').style.display = 'none';
+}
+
+document.getElementById('json-save-btn') && (document.getElementById('json-save-btn').onclick = () => {
+  if(!jsonEditor || !currentTextarea) return;
+  try{
+    const obj = jsonEditor.get();
+    const txt = JSON.stringify(obj, null, 2);
+    currentTextarea.value = txt;
+    const jobId = document.body.dataset.jobId;
+    fetch(`/update_json/${jobId}/${currentRowId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken()
+      },
+      body: JSON.stringify({json: txt})
+    }).then(r => {
+      if(!r.ok){
+        r.json().then(d => alert(d.error || 'Error'));
+      }
+    });
+    closeJSONEditor();
+  }catch(e){
+    alert('Invalid JSON: ' + e);
+  }
+});
+
+document.getElementById('json-cancel-btn') && (document.getElementById('json-cancel-btn').onclick = closeJSONEditor);

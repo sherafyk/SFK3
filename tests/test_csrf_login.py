@@ -16,6 +16,8 @@ def csrf_client():
     os.environ['UPLOAD_FOLDER'] = db_dir
     app.config['TESTING'] = True
     app.config['WTF_CSRF_ENABLED'] = True
+    from backend.app import limiter
+    limiter.reset()
     os.makedirs(db_dir, exist_ok=True)
     init_db(os.path.join(db_dir, 'requests.db'))
     with app.test_client() as client:
