@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <title>Upload</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css">
 </head>
 <body>
     <h2>Upload Images (Model: {{ model }})</h2>
@@ -39,7 +38,6 @@
     {% with messages = get_flashed_messages() %}
       {% if messages %}<div>{{ messages[0] }}</div>{% endif %}
     {% endwith %}
-<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
 <script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
 </html>

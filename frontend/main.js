@@ -17,6 +17,24 @@ let rotateLeftBtn = document.getElementById('rotateLeft');
 let rotateRightBtn = document.getElementById('rotateRight');
 let cropper;
 let currentIndex = null;
+let cropperReady;
+
+function loadCropper(){
+  if(!cropperReady){
+    cropperReady = new Promise((resolve, reject) => {
+      const css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = 'https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css';
+      document.head.appendChild(css);
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js';
+      script.onload = () => resolve();
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+  return cropperReady;
+}
 
 function getCSRFToken(){
   const meta = document.querySelector('meta[name="csrf-token"]');
@@ -122,7 +140,8 @@ function previewFiles(files) {
   gallery.appendChild(frag);
 }
 
-function openEditor(idx){
+async function openEditor(idx){
+  await loadCropper();
   currentIndex = idx;
   let file = filesToUpload[idx];
   let reader = new FileReader();
