@@ -1,4 +1,5 @@
 import os
+import json
 from flask import (
     Flask,
     render_template,
@@ -183,6 +184,8 @@ def to_json():
     try:
         json_text = call_openai_json(markdown_tables)
         json_text = enhance_tank_conditions(json_text)
+        json_obj = json.loads(json_text)
+        json_text = json.dumps(json_obj, indent=2)
     except Exception as e:
         json_text = str(e)
     return jsonify({'json': json_text})
