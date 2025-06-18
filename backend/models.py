@@ -27,6 +27,13 @@ def init_db(path: str = DB_PATH):
         cols = [row[1] for row in conn.execute("PRAGMA table_info(requests)")]
         if "json" not in cols:
             conn.execute("ALTER TABLE requests ADD COLUMN json TEXT")
+        # Table for storing per-job metadata such as the job name
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS jobmeta (name TEXT)"
+        )
+        row = conn.execute("SELECT name FROM jobmeta").fetchone()
+        if row is None:
+            conn.execute("INSERT INTO jobmeta (name) VALUES ('')")
 
 
 def log_request(
@@ -50,3 +57,20 @@ def log_request(
                 json_text,
             ),
         )
+
+
+def get_job_name(db_path: str = DB_PATH) -> str:
+    """Return the stored name for the job database at ``db_path``."""
+    with get_db(db_path) as conn:
+        row = conn.execute("SELECT name FROM jobmeta").fetchone()
+        return row[0] if row else ""
+
+
+def set_job_name(name: str, db_path: str = DB_PATH) -> None:
+    """Update the name for the job database at ``db_path``."""
+    with get_db(db_path) as conn:
+        row = conn.execute("SELECT name FROM jobmeta").fetchone()
+        if row is None:
+            conn.execute("INSERT INTO jobmeta (name) VALUES (?)", (name,))
+        else:
+            conn.execute("UPDATE jobmeta SET name=?", (name,))
