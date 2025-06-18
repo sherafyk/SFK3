@@ -5,6 +5,7 @@ from backend.utils import (
     call_openai_json,
     markdown_looks_like_json,
     enhance_tank_conditions,
+    convert_markdown,
     MODEL,
 )
 import openai
@@ -89,4 +90,11 @@ def test_enhance_tank_conditions():
     assert tank["alpha"] == pytest.approx(0.0003744427624)
     assert tank["exp"] == pytest.approx(math.e)
     assert tank["VCF"] == pytest.approx(0.99625139939)
+
+
+def test_convert_markdown_sanitizes_script():
+    md = "Bad<script>alert('x')</script>\n\n|A|B|\n|--|--|\n|1|2|"
+    html = convert_markdown(md)
+    assert "<script>" not in html
+    assert "<table>" in html
 
