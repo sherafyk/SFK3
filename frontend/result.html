@@ -28,6 +28,7 @@
     <div id="table{{ loop.index }}" data-editable-table>{{ r.html | safe }}</div>
     <form method="post" class="retry-form" action="{{ url_for('retry', filename=r.filename) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="model" value="{{ model }}" />
         <textarea name="prompt" rows="6" cols="80">{{ r.prompt }}</textarea><br>
         <button type="submit">Edit & Retry</button>
     </form>

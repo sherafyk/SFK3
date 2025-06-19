@@ -91,9 +91,11 @@ def job_db_path(job_id: str) -> str:
     return os.path.join(UPLOAD_FOLDER, f"{job_id}.db")
 
 
-def vision_pipeline(image_path: str):
+def vision_pipeline(image_path: str, model: str | None = None):
+    if model is None:
+        model = MODEL
     prompt = generate_prompt()
-    md = call_openai(image_path, prompt, os.path.basename(image_path))
+    md = call_openai(image_path, prompt, os.path.basename(image_path), model)
     return prompt, md
 
 
@@ -118,6 +120,8 @@ def upload():
             flash('No files part')
             return redirect(request.url)
         files = request.files.getlist('files')
+        model = request.form.get('model', MODEL)
+        session['model'] = model
         results = []
         job_id = generate_job_id()
         job_path = job_db_path(job_id)
@@ -129,7 +133,7 @@ def upload():
                     continue
                 file.seek(0)
                 new_name, path = save_file(file)
-                fut = worker.run_async(vision_pipeline, path)
+                fut = worker.run_async(vision_pipeline, path, model)
                 try:
                     prompt, output_text = fut.result()
                 except Exception as e:
@@ -153,8 +157,9 @@ def upload():
                 )
             else:
                 flash(f"Invalid file: {file.filename}")
-        return render_template('result.html', results=results)
-    return render_template('upload.html', model=MODEL)
+        return render_template('result.html', results=results, model=model)
+    model = session.get('model', MODEL)
+    return render_template('upload.html', model=model)
 
 
 @app.route('/retry/<filename>', methods=['POST'])
@@ -162,9 +167,11 @@ def upload():
 @login_required
 def retry(filename):
     prompt = request.form.get('prompt', generate_prompt())
+    model = request.form.get('model', session.get('model', MODEL))
+    session['model'] = model
     path = os.path.join(UPLOAD_FOLDER, filename)
     try:
-        output_text = call_openai(path, prompt, filename)
+        output_text = call_openai(path, prompt, filename, model)
     except Exception as e:
         output_text = str(e)
     job_id = generate_job_id()
@@ -185,7 +192,7 @@ def retry(filename):
         'job_id': job_id,
         'prompt': prompt,
     }
-    return render_template('result.html', results=[result])
+    return render_template('result.html', results=[result], model=model)
 
 
 @app.route('/json', methods=['POST'])
@@ -195,8 +202,9 @@ def to_json():
         return jsonify({'error': 'Unauthorized'}), 401
     data = request.get_json(silent=True) or {}
     markdown_tables = data.get('markdown', '')
+    model = session.get('model', MODEL)
     try:
-        json_text = call_openai_json(markdown_tables)
+        json_text = call_openai_json(markdown_tables, model)
         json_text = enhance_tank_conditions(json_text)
         json_obj = json.loads(json_text)
         json_text = json.dumps(json_obj, indent=2)
