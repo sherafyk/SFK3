@@ -31,9 +31,11 @@ SCHEMA_KEYS = {"arrival_tanks", "departure_tanks", "products", "time_log", "draf
 def markdown_looks_like_json(md: str) -> bool:
     try:
         obj = json.loads(md)
-        return SCHEMA_KEYS <= obj.keys()
     except json.JSONDecodeError:
         return False
+    if not isinstance(obj, dict):
+        return False
+    return SCHEMA_KEYS <= obj.keys()
 
 # Database path shared across the app
 DB_PATH = os.path.join(UPLOAD_FOLDER, 'requests.db')
