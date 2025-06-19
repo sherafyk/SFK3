@@ -120,7 +120,7 @@ def upload():
             flash('No files part')
             return redirect(request.url)
         files = request.files.getlist('files')
-        model = request.form.get('model', MODEL)
+        model = request.form.get('model') or MODEL
         session['model'] = model
         results = []
         job_id = generate_job_id()
@@ -167,7 +167,7 @@ def upload():
 @login_required
 def retry(filename):
     prompt = request.form.get('prompt', generate_prompt())
-    model = request.form.get('model', session.get('model', MODEL))
+    model = request.form.get('model') or session.get('model', MODEL)
     session['model'] = model
     path = os.path.join(UPLOAD_FOLDER, filename)
     try:
