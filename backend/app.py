@@ -41,7 +41,10 @@ from pathlib import Path
 from backend.cleanup import purge_old_uploads
 from backend import worker
 
-PASS_HASH = argon2.hash(os.environ['APP_PASSWORD'])
+APP_PASSWORD = os.getenv('APP_PASSWORD')
+if not APP_PASSWORD:
+    raise RuntimeError('APP_PASSWORD environment variable not set')
+PASS_HASH = argon2.hash(APP_PASSWORD)
 RATE_LIMIT_PER_HOUR = int(os.getenv('RATE_LIMIT_PER_HOUR', 50))
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')
 
