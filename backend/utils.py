@@ -125,7 +125,9 @@ def generate_prompt() -> str:
     )
 
 
-def call_openai(path: str, prompt: str, filename: str) -> str:
+def call_openai(path: str, prompt: str, filename: str, model: str | None = None) -> str:
+    if model is None:
+        model = MODEL
     try:
         preprocess_image(path)
         with Image.open(path) as img:
@@ -135,7 +137,7 @@ def call_openai(path: str, prompt: str, filename: str) -> str:
             b64 = base64.b64encode(buf.getbuffer()).decode()
 
         params = {
-            "model": MODEL,
+            "model": model,
             "messages": [
                 {
                     "role": "user",
@@ -149,7 +151,7 @@ def call_openai(path: str, prompt: str, filename: str) -> str:
                 }
             ],
         }
-        if MODEL not in {"o3", "o3-mini", "o4-mini"}:
+        if model not in {"o3", "o3-mini", "o4-mini"}:
             params["temperature"] = 1
 
         try:
@@ -299,7 +301,9 @@ JSON_PROMPT = """Please convert the tables below into a single JSON object that 
 Output only valid JSON."""
 
 
-def call_openai_json(tables: str) -> str:
+def call_openai_json(tables: str, model: str | None = None) -> str:
+    if model is None:
+        model = MODEL
     """Convert extracted tables to JSON via a second model call.
 
     High-reasoning models such as ``o3`` and ``o4-mini`` ignore custom
@@ -310,11 +314,11 @@ def call_openai_json(tables: str) -> str:
 
     message = tables + "\n\n" + JSON_PROMPT
     params = {
-        "model": MODEL,
+        "model": model,
         "messages": [{"role": "user", "content": message}],
         "response_format": {"type": "json_object"},
     }
-    if MODEL not in {"o3", "o3-mini", "o4-mini"}:
+    if model not in {"o3", "o3-mini", "o4-mini"}:
         params["temperature"] = 1
 
     try:

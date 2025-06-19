@@ -6,7 +6,7 @@ A simple web app for uploading field document images and extracting arrival and 
 - Password-protected login (`API2025` by default)
 - Drag & drop multi-upload with previews
 - Images stored with UTC timestamp names
-- Calls OpenAI Vision API (`o4-mini` by default)
+- Calls OpenAI Vision API (`o4-mini` by default, selectable on the upload page)
 - Shows markdown and rendered table output
 - Copy or download markdown results
 - Edit the prompt and retry extraction
@@ -59,9 +59,10 @@ docker-compose up -d --build
 
 ## Usage
 1. Drag and drop or select one or more image files (png/jpg/webp ≤8MB).
-2. After processing, copy or download the markdown tables.
-3. Review the rendered tables below. Each table cell uses an input box so you can correct the values before exporting.
-4. If the output still needs tweaking, edit the prompt and hit **Edit & Retry**.
+2. Choose the OpenAI model to use for extraction.
+3. After processing, copy or download the markdown tables.
+4. Review the rendered tables below. Each table cell uses an input box so you can correct the values before exporting.
+5. If the output still needs tweaking, edit the prompt and hit **Edit & Retry**.
 
 ## Testing
 Install dependencies and run pytest:
