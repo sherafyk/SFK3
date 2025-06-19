@@ -62,6 +62,11 @@ def test_markdown_looks_like_json():
     assert not markdown_looks_like_json(bad)
 
 
+def test_markdown_looks_like_json_non_object():
+    arr = '[1, 2, 3]'
+    assert not markdown_looks_like_json(arr)
+
+
 def test_enhance_tank_conditions():
     data = {
         "tankConditions": {
