@@ -73,16 +73,24 @@ if (form) {
     const processed = await Promise.all(
       filesToUpload.map(async file => {
         const img = await createImageBitmap(file);
-        const canvas = new OffscreenCanvas(
-          Math.min(img.width, 1024),
-          Math.min(img.height, 1024)
-        );
+        const width = Math.min(img.width, 1024);
+        const height = Math.min(img.height, 1024);
+        let canvas;
+        if (typeof OffscreenCanvas !== 'undefined') {
+          canvas = new OffscreenCanvas(width, height);
+        } else {
+          canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+        }
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const blob = await canvas.convertToBlob({
-          type: 'image/jpeg',
-          quality: 0.8
-        });
+        ctx.drawImage(img, 0, 0, width, height);
+        let blob;
+        if (canvas.convertToBlob) {
+          blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.8 });
+        } else {
+          blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.8));
+        }
         return new File([blob], file.name, { type: 'image/jpeg' });
       })
     );
