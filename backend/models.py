@@ -34,6 +34,14 @@ def init_db(path: str = DB_PATH):
         row = conn.execute("SELECT name FROM jobmeta").fetchone()
         if row is None:
             conn.execute("INSERT INTO jobmeta (name) VALUES ('')")
+        # Table for storing additional documents uploaded for the job
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS job_attachments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                filename TEXT,
+                timestamp TEXT
+            )"""
+        )
 
 
 def log_request(
@@ -74,3 +82,24 @@ def set_job_name(name: str, db_path: str = DB_PATH) -> None:
             conn.execute("INSERT INTO jobmeta (name) VALUES (?)", (name,))
         else:
             conn.execute("UPDATE jobmeta SET name=?", (name,))
+
+
+def add_attachment(filename: str, db_path: str = DB_PATH) -> None:
+    """Insert a record into the ``job_attachments`` table."""
+    with get_db(db_path) as conn:
+        conn.execute(
+            "INSERT INTO job_attachments (filename, timestamp) VALUES (?, ?)",
+            (filename, datetime.datetime.utcnow().isoformat()),
+        )
+
+
+def get_attachments(db_path: str = DB_PATH) -> list[dict]:
+    """Return a list of attachment dictionaries for the job DB."""
+    with get_db(db_path) as conn:
+        rows = conn.execute(
+            "SELECT id, filename, timestamp FROM job_attachments ORDER BY id"
+        ).fetchall()
+    return [
+        {"id": r[0], "filename": r[1], "timestamp": r[2]}
+        for r in rows
+    ]

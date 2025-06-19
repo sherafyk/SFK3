@@ -9,6 +9,7 @@ from flask import (
     session,
     flash,
     jsonify,
+    send_from_directory,
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -36,7 +37,14 @@ from backend.utils import (
     MAX_FILE_SIZE_MB,
     get_db,
 )
-from backend.models import init_db, log_request, get_job_name, set_job_name
+from backend.models import (
+    init_db,
+    log_request,
+    get_job_name,
+    set_job_name,
+    add_attachment,
+    get_attachments,
+)
 from pathlib import Path
 from backend.cleanup import purge_old_uploads
 from backend import worker
@@ -263,6 +271,13 @@ def job_detail(job_id):
     init_db(db_path)
 
     if request.method == 'POST':
+        file = request.files.get('attachment')
+        if file and file.filename:
+            new_name, _ = save_file(file)
+            add_attachment(new_name, db_path=db_path)
+            flash('Attachment uploaded')
+            return redirect(url_for('job_detail', job_id=job_id))
+
         new_name = request.form.get('job_name', '')
         set_job_name(new_name, db_path=db_path)
         with get_db(db_path) as conn:
@@ -298,7 +313,14 @@ def job_detail(job_id):
         }
         for r in rows
     ]
-    return render_template('job_detail.html', job_id=job_id, rows=rows, job_name=job_name)
+    attachments = get_attachments(db_path)
+    return render_template(
+        'job_detail.html',
+        job_id=job_id,
+        rows=rows,
+        job_name=job_name,
+        attachments=attachments,
+    )
 
 
 @app.route('/update_json/<job_id>/<int:req_id>', methods=['POST'])
@@ -320,6 +342,13 @@ def update_json(job_id, req_id):
     with get_db(db_path) as conn:
         conn.execute('UPDATE requests SET json=? WHERE id=?', (json_text, req_id))
     return jsonify({'status': 'ok'})
+
+
+@app.route('/uploads/<path:filename>')
+@login_required
+def uploaded_file(filename):
+    """Serve uploaded files from the uploads folder."""
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 
 @app.route('/logout')
