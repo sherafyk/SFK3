@@ -17,6 +17,7 @@ from redis.exceptions import RedisError
 from flask_wtf import CSRFProtect
 from passlib.hash import argon2
 from dotenv import load_dotenv
+from functools import wraps
 
 load_dotenv()
 
@@ -71,6 +72,17 @@ init_db()
 purge_old_uploads()
 
 
+def login_required(func):
+    """Redirect to login page when the user is not authenticated."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 def job_db_path(job_id: str) -> str:
     """Return the SQLite path for the given job."""
     return os.path.join(UPLOAD_FOLDER, f"{job_id}.db")
@@ -96,9 +108,8 @@ def login():
 
 @app.route('/upload', methods=['GET', 'POST'])
 @limiter.limit(f"{RATE_LIMIT_PER_HOUR}/hour")
+@login_required
 def upload():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
     if request.method == 'POST':
         if 'files' not in request.files:
             flash('No files part')
@@ -145,9 +156,8 @@ def upload():
 
 @app.route('/retry/<filename>', methods=['POST'])
 @limiter.limit(f"{RATE_LIMIT_PER_HOUR}/hour")
+@login_required
 def retry(filename):
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
     prompt = request.form.get('prompt', generate_prompt())
     path = os.path.join(UPLOAD_FOLDER, filename)
     try:
@@ -193,9 +203,8 @@ def to_json():
 
 
 @app.route('/history')
+@login_required
 def history():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
     job_files = sorted(Path(UPLOAD_FOLDER).glob('*.db'), key=lambda p: p.stat().st_mtime, reverse=True)
     jobs = []
     for f in job_files:
@@ -213,9 +222,8 @@ def history():
 
 
 @app.route('/delete_job/<job_id>', methods=['POST'])
+@login_required
 def delete_job(job_id):
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
     db_path = job_db_path(job_id)
     if os.path.exists(db_path):
         try:
@@ -227,9 +235,8 @@ def delete_job(job_id):
 
 
 @app.route('/job/<job_id>', methods=['GET', 'POST'])
+@login_required
 def job_detail(job_id):
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
     db_path = job_db_path(job_id)
     if not os.path.exists(db_path):
         return (
