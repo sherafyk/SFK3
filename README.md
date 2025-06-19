@@ -6,7 +6,7 @@ A simple web app for uploading field document images and extracting arrival and 
 - Password-protected login (`API2025` by default)
 - Drag & drop multi-upload with previews
 - Images stored with UTC timestamp names
-- Calls OpenAI Vision API (`o4-mini` by default, selectable on the upload page)
+- Calls OpenAI Vision API (`gpt-4.1-mini` by default, selectable on the upload page)
 - Shows markdown and rendered table output
 - Copy or download markdown results
 - Edit the prompt and retry extraction

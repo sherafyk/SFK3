@@ -20,7 +20,7 @@ ALLOWED_EXTENSIONS = {
     for ext in os.getenv('ALLOWED_EXTENSIONS', 'png,jpg,jpeg,webp').split(',')
 }
 MAX_FILE_SIZE_MB = int(os.getenv('MAX_FILE_SIZE_MB', 8))
-MODEL = os.getenv('MODEL', 'o4-mini')
+MODEL = os.getenv('MODEL', 'gpt-4.1-mini')
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 openai.api_key = os.getenv('OPENAI_API_KEY')
@@ -152,7 +152,7 @@ def call_openai(path: str, prompt: str, filename: str, model: str | None = None)
             ],
         }
         if model not in {"o3", "o3-mini", "o4-mini"}:
-            params["temperature"] = 1
+            params["temperature"] = 0.25
 
         try:
             response = openai.chat.completions.create(**params)
@@ -308,7 +308,7 @@ def call_openai_json(tables: str, model: str | None = None) -> str:
 
     High-reasoning models such as ``o3`` and ``o4-mini`` ignore custom
     ``temperature`` values.  When using these models the parameter is omitted;
-    otherwise ``temperature`` defaults to ``1``.  If the API still rejects the
+    otherwise ``temperature`` defaults to ``0.25``.  If the API still rejects the
     parameter, the call is retried without it.
     """
 
@@ -319,7 +319,7 @@ def call_openai_json(tables: str, model: str | None = None) -> str:
         "response_format": {"type": "json_object"},
     }
     if model not in {"o3", "o3-mini", "o4-mini"}:
-        params["temperature"] = 1
+        params["temperature"] = 0.25
 
     try:
         response = openai.chat.completions.create(**params)

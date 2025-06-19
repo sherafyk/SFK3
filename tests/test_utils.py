@@ -29,6 +29,7 @@ def test_call_openai_json_valid_json():
             model=MODEL,
             messages=[{"role": "user", "content": ANY}],
             response_format={"type": "json_object"},
+            temperature=0.25,
         )
 
 
@@ -50,7 +51,7 @@ def test_call_openai_json_retry_without_temperature():
         assert json.loads(result) == {"foo": "bar"}
         assert chat_mock.completions.create.call_count == 2
         first_args = chat_mock.completions.create.call_args_list[0].kwargs
-        assert first_args['temperature'] == 1
+        assert first_args['temperature'] == 0.25
         second_args = chat_mock.completions.create.call_args_list[1].kwargs
         assert 'temperature' not in second_args
 
