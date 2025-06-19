@@ -2,6 +2,7 @@ import sys, pathlib
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 import os
 import tempfile
+import io
 import pytest
 
 UPLOAD_DIR = tempfile.mkdtemp()
@@ -146,3 +147,38 @@ def test_update_json_endpoint(client):
 
     rv = client.post(f'/update_json/{db_path.stem}/{req_id}', json={'json': '{bad'})
     assert rv.status_code == 400
+
+
+def test_init_db_creates_attachment_table(tmp_path):
+    import sqlite3
+    from backend.models import init_db
+
+    db = tmp_path / 'a.db'
+    init_db(str(db))
+    with sqlite3.connect(db) as conn:
+        cols = [r[1] for r in conn.execute('PRAGMA table_info(job_attachments)')]
+    assert {'id', 'filename', 'timestamp'} <= set(cols)
+
+
+def test_upload_attachment(client, tmp_path):
+    client.post('/', data={'password': 'API2025'}, follow_redirects=True)
+    from pathlib import Path
+    from backend.utils import UPLOAD_FOLDER, get_db
+    from backend.models import init_db
+
+    job_id = 'attjob'
+    db_path = Path(UPLOAD_FOLDER) / f'{job_id}.db'
+    init_db(str(db_path))
+    data = {
+        'attachment': (io.BytesIO(b'data'), 'doc.txt'),
+    }
+    rv = client.post(
+        f'/job/{job_id}',
+        data=data,
+        content_type='multipart/form-data',
+        follow_redirects=True,
+    )
+    assert rv.status_code == 200
+    with get_db(str(db_path)) as conn:
+        row = conn.execute('SELECT filename FROM job_attachments').fetchone()
+    assert row is not None
