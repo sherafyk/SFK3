@@ -1,5 +1,6 @@
 import re
-from typing import Any, Dict, List
+import json
+from typing import Any, Dict, List, Optional
 
 # Prompt used when sending BDR images to the LLM.  This simplified prompt focuses
 # only on key fields present near the top of the document and skips fuel sample
@@ -30,6 +31,37 @@ Return JSON in this structure:
 
 Convert delivery, flash and pour temperatures to Fahrenheit. Output only the
 JSON."""
+
+
+def _extract_json(text: str) -> Optional[Dict[str, Any]]:
+    """Return the first JSON object found in ``text`` or ``None``.
+
+    The LLM may include explanations or wrap the object in a fenced code block.
+    This helper searches for a JSON snippet that can be decoded.
+    """
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL | re.IGNORECASE)
+    if fence:
+        snippet = fence.group(1)
+        try:
+            return json.loads(snippet)
+        except json.JSONDecodeError:
+            pass
+
+    brace = re.search(r"\{.*\}", text, re.DOTALL)
+    if brace:
+        snippet = brace.group(0)
+        try:
+            return json.loads(snippet)
+        except json.JSONDecodeError:
+            pass
+
+    return None
 
 
 def _find_value(text: str, patterns: List[str]) -> str:
@@ -179,7 +211,12 @@ def _parse_products(text: str) -> List[Dict[str, Any]]:
 
 
 def extract_bdr(text: str) -> Dict[str, Any]:
-    """Extract structured BDR data from raw text."""
+    """Extract structured BDR data from raw text or JSON output."""
+
+    json_obj = _extract_json(text)
+    if isinstance(json_obj, dict):
+        return json_obj
+
     result = {
         "vessel_name": _find_value(text, _FIELD_PATTERNS["vessel_name"]),
         "delivery_location": _find_value(text, _FIELD_PATTERNS["delivery_location"]),
