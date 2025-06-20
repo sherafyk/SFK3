@@ -37,7 +37,12 @@ from backend.utils import (
     MAX_FILE_SIZE_MB,
     get_db,
 )
-from backend.bdr_extractor import BDR_PROMPT, extract_bdr, merge_bdr_json
+from backend.bdr_extractor import (
+    BDR_PROMPT,
+    extract_bdr,
+    merge_bdr_json,
+    _extract_json,
+)
 from backend.models import (
     init_db,
     log_request,
@@ -367,11 +372,19 @@ def extract_bdr_route(job_id, req_id):
     model = session.get('model', MODEL)
     image_path = os.path.join(UPLOAD_FOLDER, filename)
     try:
-        output_text = call_openai(image_path, BDR_PROMPT, filename, model, crop_top_fraction=0.33)
+        output_text = call_openai(
+            image_path,
+            BDR_PROMPT,
+            filename,
+            model,
+            crop_top_fraction=0.33,
+        )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-    new_data = extract_bdr(output_text)
+    new_data = _extract_json(output_text)
+    if new_data is None:
+        new_data = extract_bdr(output_text)
     try:
         existing_data = json.loads(existing_json) if existing_json else {}
     except json.JSONDecodeError:
