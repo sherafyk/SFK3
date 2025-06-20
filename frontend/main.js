@@ -399,8 +399,8 @@ function extractBDR(id){
         alert(data.error);
         return;
       }
-      const txt = document.querySelector(`textarea[name='json_${id}']`);
-      if (txt) txt.value = data.json;
+      const txt = document.querySelector(`textarea[name='bdr_json_${id}']`);
+      if (txt) txt.value = data.bdr_json;
       showStatus('BDR data extracted');
     })
     .finally(() => {
