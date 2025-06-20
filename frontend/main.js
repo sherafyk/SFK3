@@ -384,9 +384,8 @@ function adminGenerateJSON(id){
     });
 }
 
-function extractBDR(id){
+function extractBDR(jobId, id){
   startProgress();
-  const jobId = document.body.dataset.jobId;
   fetch(`/extract_bdr/${jobId}/${id}`, {
     method: 'POST',
     headers: {
@@ -410,9 +409,8 @@ function extractBDR(id){
     });
 }
 
-function bdrTablesToJSON(id){
+function bdrTablesToJSON(jobId, id){
   startProgress();
-  const jobId = document.body.dataset.jobId;
   const md = document.querySelector(`textarea[name='bdr_md_${id}']`).value;
   fetch(`/bdr_json/${jobId}/${id}`, {
     method: 'POST',
