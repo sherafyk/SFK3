@@ -42,6 +42,7 @@ from backend.bdr_extractor import (
     extract_bdr,
     merge_bdr_json,
     _extract_json,
+    call_openai_bdr_json,
 )
 from backend.models import (
     init_db,
@@ -293,12 +294,16 @@ def job_detail(job_id):
                 prompt_val = request.form.get(f'prompt_{pid}', '')
                 output_val = request.form.get(f'output_{pid}', '')
                 json_val = request.form.get(f'json_{pid}', '')
+                bdr_json_val = request.form.get(f'bdr_json_{pid}', '')
+                bdr_md_val = request.form.get(f'bdr_md_{pid}', '')
                 conn.execute(
-                    "UPDATE requests SET prompt=?, output=?, json=? WHERE id=?",
+                    "UPDATE requests SET prompt=?, output=?, json=?, bdr_json=?, bdr_md=? WHERE id=?",
                     (
                         prompt_val,
                         output_val,
                         json_val,
+                        bdr_json_val,
+                        bdr_md_val,
                         pid,
                     ),
                 )
@@ -306,7 +311,7 @@ def job_detail(job_id):
         return redirect(url_for('job_detail', job_id=job_id))
     with get_db(db_path) as conn:
         rows = conn.execute(
-            "SELECT id, filename, prompt, output, json, bdr_json FROM requests ORDER BY id"
+            "SELECT id, filename, prompt, output, json, bdr_json, bdr_md FROM requests ORDER BY id"
         ).fetchall()
     job_name = get_job_name(db_path)
     rows = [
@@ -317,6 +322,7 @@ def job_detail(job_id):
             'output': r[3],
             'json': r[4],
             'bdr_json': r[5],
+            'bdr_md': r[6],
         }
         for r in rows
     ]
@@ -353,7 +359,7 @@ def update_json(job_id, req_id):
 
 @app.route('/extract_bdr/<job_id>/<int:req_id>', methods=['POST'])
 def extract_bdr_route(job_id, req_id):
-    """Run the BDR extractor on the original image and save merged JSON."""
+    """Extract BDR tables from the original image and store the markdown."""
     if not session.get('logged_in'):
         return jsonify({'error': 'Unauthorized'}), 401
 
@@ -382,16 +388,38 @@ def extract_bdr_route(job_id, req_id):
         )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    html_output = convert_markdown(output_text)
+    with get_db(db_path) as conn:
+        conn.execute(
+            'UPDATE requests SET bdr_md=? WHERE id=?',
+            (output_text, req_id),
+        )
+    return jsonify({'bdr_md': output_text, 'html': html_output})
 
 
-    new_data = _extract_json(output_text)
-    if new_data is None:
-        try:
-            new_data = json.loads(output_text)
-        except json.JSONDecodeError:
-            new_data = extract_bdr(output_text)
-    json_text = json.dumps(new_data, indent=2)
+@app.route('/bdr_json/<job_id>/<int:req_id>', methods=['POST'])
+def bdr_json_route(job_id, req_id):
+    """Convert stored BDR tables to JSON and save the result."""
+    if not session.get('logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
 
+    data = request.get_json(silent=True) or {}
+    markdown_tables = data.get('markdown', '')
+    if not markdown_tables:
+        return jsonify({'error': 'No markdown supplied'}), 400
+
+    model = session.get('model', MODEL)
+    try:
+        json_text = call_openai_bdr_json(markdown_tables, model)
+        json_obj = json.loads(json_text)
+        json_text = json.dumps(json_obj, indent=2)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    db_path = job_db_path(job_id)
+    if not os.path.exists(db_path):
+        return jsonify({'error': 'Job not found'}), 404
+    init_db(db_path)
     with get_db(db_path) as conn:
         conn.execute(
             'UPDATE requests SET bdr_json=? WHERE id=?',

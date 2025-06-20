@@ -2,35 +2,24 @@ import re
 import json
 from typing import Any, Dict, List, Optional
 
-# Prompt used when sending BDR images to the LLM.  This simplified prompt focuses
-# only on key fields present near the top of the document and skips fuel sample
-# seal numbers.
-BDR_PROMPT = """Extract the following information from the top portion of this
-Bunker Delivery Receipt (BDR). If a value is missing, return null and ignore the
-rest of the document.
-
-Return JSON in this structure:
-{
-  "vessel_name": "",
-  "delivery_location": "",
-  "products": [
-    {
-      "product_name": "",
-      "weight_mt": null,
-      "gross_barrels": null,
-      "net_barrels": null,
-      "api_gravity": null,
-      "density_kgm3": null,
-      "viscosity": {"value": null, "unit": "", "measured_at": ""},
-      "delivery_temperature_f": null,
-      "flash_point_f": null,
-      "pour_point_f": null
-    }
-  ]
-}
-
-Convert delivery, flash and pour temperatures to Fahrenheit. Output only the
-JSON."""
+# Prompt used when sending BDR images to the LLM.  The model should return two
+# markdown tables that can later be converted to JSON.
+BDR_PROMPT = (
+    "Please analyze the attached image and extract the transaction data as two "
+    "separate tables, in markdown format:\n"
+    "- The first table should show general information found at the top header "
+    "table of the document.\n"
+    "- The second table should show product specifications found just below the "
+    "top header table of the document.\n\n"
+    "The first table should use these columns (with these exact headers):\n"
+    "| Vessel Name | IMO Number | Flag Country | Delivery Port |\n"
+    "| ----------- | ---------- | ------------ | ------------- |\n\n"
+    "The second table should use these columns (with these exact headers):\n"
+    "| Product Description | Weight (MT) | Gross Barrels | Net Barrels | API | "
+    "Density | Visc cSt (°C) | Flash (°C) | Sulfur % |\n"
+    "| ------------------- | ----------- | ------------- | ----------- | --- | "
+    "------- | ------------- | ---------- | -------- |"
+)
 
 
 def _extract_json(text: str) -> Optional[Dict[str, Any]]:
@@ -251,4 +240,73 @@ def merge_bdr_json(existing: Dict[str, Any] | None, new: Dict[str, Any]) -> Dict
             if key not in existing or existing[key] in (None, "", []):
                 existing[key] = val
     return existing
+
+
+# Prompt for converting the BDR markdown tables to JSON.  The schema mirrors the
+# fields described in ``AGENTS.md``.  Any missing values should be set to null.
+BDR_JSON_PROMPT = """
+Convert the two markdown tables below into the following JSON structure. Use
+null when a value is missing.
+
+```json
+{
+  "vessel_name": "",
+  "barge_name": "",
+  "vessel_flag": "",
+  "port_delivery_location": "",
+  "date": "",
+  "products": [
+    {
+      "product_name": "",
+      "weight_mt": null,
+      "gross_barrels": null,
+      "net_barrels": null,
+      "api_gravity": null,
+      "density_kgm3": null,
+      "viscosity": {"value": null, "unit": "", "measured_at": ""},
+      "delivery_temperature_f": null,
+      "flash_point_f": null,
+      "pour_point_f": null,
+      "sulfur_content_percent": null
+    }
+  ],
+  "sample_seal_numbers": [
+    {"product": "", "sample_type": "", "seal_number": ""}
+  ]
+}
+```
+
+Convert any temperatures from Celsius to Fahrenheit. Output only valid JSON.
+"""
+
+
+def call_openai_bdr_json(tables: str, model: str | None = None) -> str:
+    """Use OpenAI to convert BDR tables to standardized JSON."""
+    from .utils import MODEL, openai
+
+    if model is None:
+        model = MODEL
+
+    message = tables + "\n\n" + BDR_JSON_PROMPT
+    params = {
+        "model": model,
+        "messages": [{"role": "user", "content": message}],
+        "response_format": {"type": "json_object"},
+    }
+    if model not in {"o3", "o3-mini", "o4-mini"}:
+        params["temperature"] = 0.25
+
+    try:
+        response = openai.chat.completions.create(**params)
+    except openai.BadRequestError as e:
+        if (
+            getattr(e, "body", None)
+            and e.body.get("error", {}).get("code") == "unsupported_value"
+            and e.body.get("error", {}).get("param") == "temperature"
+        ):
+            params.pop("temperature", None)
+            response = openai.chat.completions.create(**params)
+        else:
+            raise
+    return response.choices[0].message.content
 
