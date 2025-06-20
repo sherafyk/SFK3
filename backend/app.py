@@ -382,8 +382,14 @@ def extract_bdr_route(job_id, req_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
     new_data = _extract_json(output_text)
     if new_data is None:
+
+    try:
+        new_data = json.loads(output_text)
+    except json.JSONDecodeError:
+
         new_data = extract_bdr(output_text)
     try:
         existing_data = json.loads(existing_json) if existing_json else {}
