@@ -107,20 +107,21 @@ def _parse_viscosity(value: str) -> Dict[str, Any]:
 
 _FIELD_PATTERNS = {
     "vessel_name": [r"vessel name", r"bunkers delivered to \(vessel name\)"],
-    "delivery_location": [r"delivery location", r"port", r"terminal location"],
+    "imo_number": [r"imo number"],
+    "flag_country": [r"flag", r"flag country"],
+    "delivery_port": [r"delivery port", r"delivery location", r"port"],
 }
 
 _PRODUCT_HEADER_MAP = {
-    "product_name": ["product description", "fuel grade", "product"],
+    "product_description": ["product description", "fuel grade", "product"],
     "weight_mt": ["weight (mt)", "metric tons"],
     "gross_barrels": ["gross bbls", "gross barrels"],
     "net_barrels": ["net bbls", "net barrels"],
-    "api_gravity": ["gravity api", "api @ 60f", "api @ 15c", "api"],
-    "density_kgm3": ["density", "density @ 15c", "density @ 60f"],
-    "viscosity": ["visc", "viscosity", "visc cst @ 40c", "visc cst @ 50c"],
-    "delivery_temperature": ["temp °c", "temp °f", "temp @ delivery", "temp"],
-    "flash_point": ["flash °c", "flash °f", "flash point"],
-    "pour_point": ["pour °c", "pour °f", "pour point"],
+    "api": ["api", "gravity api", "api @ 60f", "api @ 15c"],
+    "density": ["density", "density @ 15c", "density @ 60f"],
+    "viscosity": ["visc", "viscosity", "visc cst", "visc cst @ 40c", "visc cst @ 50c"],
+    "flash_point": ["flash", "flash °c", "flash °f", "flash point"],
+    "sulfur_percent": ["sulfur %", "sulphur %", "sulfur % wt", "sulphur % (m/m)"]
 }
 
 
@@ -158,7 +159,7 @@ def _parse_products(text: str) -> List[Dict[str, Any]]:
                     tmp_map[canon] = idx
                     tmp_header[canon] = parts[idx].lower()
                     break
-        if "product_name" in tmp_map and len(tmp_map) >= 3:
+        if "product_description" in tmp_map and len(tmp_map) >= 3:
             start = i
             header_parts = parts
             delim = d
@@ -183,16 +184,15 @@ def _parse_products(text: str) -> List[Dict[str, Any]]:
     for p in products:
         result.append(
             {
-                "product_name": p.get("product_name", ""),
+                "product_description": p.get("product_description", ""),
                 "weight_mt": _to_float(p.get("weight_mt")),
                 "gross_barrels": _to_float(p.get("gross_barrels")),
                 "net_barrels": _to_float(p.get("net_barrels")),
-                "api_gravity": _to_float(p.get("api_gravity")),
-                "density_kgm3": _to_float(p.get("density_kgm3")),
+                "api": _to_float(p.get("api")),
+                "density": _to_float(p.get("density")),
                 "viscosity": _parse_viscosity(p.get("viscosity", "")),
-                "delivery_temperature_f": _temp_to_f(p.get("delivery_temperature", ""), header_map.get("delivery_temperature", "")),
                 "flash_point_f": _temp_to_f(p.get("flash_point", ""), header_map.get("flash_point", "")),
-                "pour_point_f": _temp_to_f(p.get("pour_point", ""), header_map.get("pour_point", "")),
+                "sulfur_percent": _to_float(p.get("sulfur_percent")),
             }
         )
     return result
@@ -208,7 +208,9 @@ def extract_bdr(text: str) -> Dict[str, Any]:
 
     result = {
         "vessel_name": _find_value(text, _FIELD_PATTERNS["vessel_name"]),
-        "delivery_location": _find_value(text, _FIELD_PATTERNS["delivery_location"]),
+        "imo_number": _find_value(text, _FIELD_PATTERNS["imo_number"]),
+        "flag_country": _find_value(text, _FIELD_PATTERNS["flag_country"]),
+        "delivery_port": _find_value(text, _FIELD_PATTERNS["delivery_port"]),
         "products": _parse_products(text),
     }
     return result
@@ -251,27 +253,21 @@ null when a value is missing.
 ```json
 {
   "vessel_name": "",
-  "barge_name": "",
-  "vessel_flag": "",
-  "port_delivery_location": "",
-  "date": "",
+  "imo_number": "",
+  "flag_country": "",
+  "delivery_port": "",
   "products": [
     {
-      "product_name": "",
+      "product_description": "",
       "weight_mt": null,
       "gross_barrels": null,
       "net_barrels": null,
-      "api_gravity": null,
-      "density_kgm3": null,
+      "api": null,
+      "density": null,
       "viscosity": {"value": null, "unit": "", "measured_at": ""},
-      "delivery_temperature_f": null,
       "flash_point_f": null,
-      "pour_point_f": null,
-      "sulfur_content_percent": null
+      "sulfur_percent": null
     }
-  ],
-  "sample_seal_numbers": [
-    {"product": "", "sample_type": "", "seal_number": ""}
   ]
 }
 ```
