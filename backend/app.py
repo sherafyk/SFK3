@@ -306,7 +306,7 @@ def job_detail(job_id):
         return redirect(url_for('job_detail', job_id=job_id))
     with get_db(db_path) as conn:
         rows = conn.execute(
-            "SELECT id, filename, prompt, output, json FROM requests ORDER BY id"
+            "SELECT id, filename, prompt, output, json, bdr_json FROM requests ORDER BY id"
         ).fetchall()
     job_name = get_job_name(db_path)
     rows = [
@@ -316,6 +316,7 @@ def job_detail(job_id):
             'prompt': r[2],
             'output': r[3],
             'json': r[4],
+            'bdr_json': r[5],
         }
         for r in rows
     ]
@@ -363,12 +364,12 @@ def extract_bdr_route(job_id, req_id):
     init_db(db_path)
     with get_db(db_path) as conn:
         row = conn.execute(
-            'SELECT filename, json FROM requests WHERE id=?', (req_id,)
+            'SELECT filename FROM requests WHERE id=?', (req_id,)
         ).fetchone()
     if not row:
         return jsonify({'error': 'Request not found'}), 404
 
-    filename, existing_json = row
+    filename = row[0]
     model = session.get('model', MODEL)
     image_path = os.path.join(UPLOAD_FOLDER, filename)
     try:
@@ -389,21 +390,14 @@ def extract_bdr_route(job_id, req_id):
             new_data = json.loads(output_text)
         except json.JSONDecodeError:
             new_data = extract_bdr(output_text)
-    try:
-        existing_data = json.loads(existing_json) if existing_json else {}
-    except json.JSONDecodeError:
-        existing_data = {}
-
-    merged = merge_bdr_json(existing_data, new_data)
-    json_text = json.dumps(merged, indent=2)
+    json_text = json.dumps(new_data, indent=2)
 
     with get_db(db_path) as conn:
         conn.execute(
-            'UPDATE requests SET prompt=?, output=?, json=? WHERE id=?',
-            (BDR_PROMPT, output_text, json_text, req_id),
+            'UPDATE requests SET bdr_json=? WHERE id=?',
+            (json_text, req_id),
         )
-
-    return jsonify({'json': json_text})
+    return jsonify({'bdr_json': json_text})
 
 
 @app.route('/uploads/<path:filename>')
