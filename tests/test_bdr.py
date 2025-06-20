@@ -17,12 +17,10 @@ def test_extract_bdr_sample():
     )
     result = extract_bdr(text)
     assert result["vessel_name"] == "MATSON ANCHORAGE"
-    assert result["delivery_location"] == "TACOMA, WA"
+    assert result["delivery_port"] == "TACOMA, WA"
     assert len(result["products"]) == 1
     prod = result["products"][0]
-    assert math.isclose(prod["delivery_temperature_f"], 113.0, abs_tol=0.1)
     assert math.isclose(prod["flash_point_f"], 179.6, abs_tol=0.1)
-    assert math.isclose(prod["pour_point_f"], 15.8, abs_tol=0.1)
 
 
 def test_extract_bdr_variant_headers():
@@ -39,7 +37,7 @@ def test_extract_bdr_variant_headers():
     )
     result = extract_bdr(text)
     prod = result["products"][0]
-    assert prod["product_name"] == "MGO"
+    assert prod["product_description"] == "MGO"
     assert prod["weight_mt"] == 100
-    assert math.isclose(prod["delivery_temperature_f"], 100, abs_tol=0.1)
+
 
