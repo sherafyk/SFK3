@@ -2,6 +2,7 @@
 
 :root {
   --primary: #2563eb;
+  --primary-hover: #3b82f6;
   --bg: #f8f9fc;
   --text: #1f2937;
   --border: #e5e7eb;
@@ -89,11 +90,12 @@ input[type="submit"] {
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
+  display: inline-block;
 }
 
 button:hover,
 input[type="submit"]:hover {
-  background: #1e40af;
+  background: var(--primary-hover);
 }
 
 input[type="text"],
