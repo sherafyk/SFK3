@@ -29,3 +29,25 @@ def test_extract_bdr_sample():
     seals = {(d["product"], d["sample_type"], d["seal_number"]) for d in result["sample_seal_numbers"]}
     assert ("IFO 380", "Marpol", "1120971") in seals
     assert ("IFO 380", "Barge", "1120974") in seals
+
+
+def test_extract_bdr_variant_headers():
+    text = (
+        "Vessel Name: TEST SHIP\n"
+        "Barge Name: TEST BARGE\n"
+        "Flag: US\n"
+        "Port Delivery Location: MOBILE\n"
+        "Date: 2025-07-01\n\n"
+        "Fuel Grade | Metric Tons | Gross Barrels | Net Barrels | API | Density | Viscosity | Temp F | Flash F | Pour F | Sulphur % (M/M)\n"
+        "MGO | 100 | 630 | 620 | 45 | 820 | 10 cSt @ 40C | 100 | 150 | 30 | 0.10\n\n"
+        "Product | Marpol Sample | Supplier | Ship Sample | Barge\n"
+        "MGO | A1 | B2 | C3 | D4\n"
+    )
+    result = extract_bdr(text)
+    prod = result["products"][0]
+    assert prod["product_name"] == "MGO"
+    assert prod["weight_mt"] == 100
+    assert math.isclose(prod["delivery_temperature_f"], 100, abs_tol=0.1)
+    seals = {(d["sample_type"], d["seal_number"]) for d in result["sample_seal_numbers"]}
+    assert ("Marpol Sample", "A1") in seals
+    assert ("Barge", "D4") in seals

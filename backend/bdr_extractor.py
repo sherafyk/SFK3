@@ -117,45 +117,53 @@ def _match_header_index(headers: List[str], target: str) -> int | None:
 
 
 def _parse_products(text: str) -> List[Dict[str, Any]]:
+    def _split(line: str):
+        d = "|" if "|" in line else None
+        if d:
+            return [p.strip() for p in line.strip("|").split("|")], d
+        return re.split(r"\s{2,}", line.strip()), d
+
     lines = [ln.strip() for ln in text.splitlines()]
     start = None
+    header_parts: List[str] = []
+    delim = None
+    col_map: Dict[str, int] = {}
+    header_map: Dict[str, str] = {}
+
     for i, line in enumerate(lines):
-        if re.search(r"product", line, re.IGNORECASE) and re.search(r"weight", line, re.IGNORECASE):
+        if not line:
+            continue
+        parts, d = _split(line)
+        tmp_map: Dict[str, int] = {}
+        tmp_header: Dict[str, str] = {}
+        for canon, syns in _PRODUCT_HEADER_MAP.items():
+            for syn in syns:
+                idx = _match_header_index(parts, syn)
+                if idx is not None:
+                    tmp_map[canon] = idx
+                    tmp_header[canon] = parts[idx].lower()
+                    break
+        if "product_name" in tmp_map and len(tmp_map) >= 3:
             start = i
+            header_parts = parts
+            delim = d
+            col_map = tmp_map
+            header_map = tmp_header
             break
+
     if start is None:
         return []
-    header_line = lines[start]
-    delim = "|" if "|" in header_line else None
-    if delim:
-        header_parts = [p.strip().lower() for p in header_line.strip("|").split("|")]
-    else:
-        header_parts = re.split(r"\s{2,}", header_line.lower())
-    # Map columns
-    col_map = {}
-    header_map = {}
-    for canon, syns in _PRODUCT_HEADER_MAP.items():
-        for syn in syns:
-            idx = _match_header_index(header_parts, syn)
-            if idx is not None:
-                col_map[canon] = idx
-                header_map[canon] = header_parts[idx]
-                break
+
     products = []
     for j in range(start + 1, len(lines)):
         row = lines[j]
         if not row:
             break
-        if delim:
-            parts = [p.strip() for p in row.strip("|").split("|")]
-        else:
-            parts = re.split(r"\s{2,}", row)
+        parts, _ = _split(row)
         if len(parts) < len(col_map):
             continue
-        prod = {}
-        for key, idx in col_map.items():
-            prod[key] = parts[idx] if idx < len(parts) else ""
-    products.append(prod)
+        prod = {key: parts[idx] if idx < len(parts) else "" for key, idx in col_map.items()}
+        products.append(prod)
     result = []
     for p in products:
         result.append(
@@ -177,38 +185,51 @@ def _parse_products(text: str) -> List[Dict[str, Any]]:
 
 
 def _parse_seal_numbers(text: str) -> List[Dict[str, str]]:
+    SAMPLE_HEADERS = ["marpol", "sample", "supplier", "ship", "vessel", "barge"]
+
+    def _split(line: str):
+        d = "|" if "|" in line else None
+        if d:
+            return [p.strip() for p in line.strip("|").split("|")], d
+        return re.split(r"\s{2,}", line.strip()), d
+
     lines = [ln.strip() for ln in text.splitlines()]
     start = None
+    headers: List[str] = []
+    delim = None
     for i, line in enumerate(lines):
-        if re.search(r"product", line, re.IGNORECASE) and re.search(r"marpol", line, re.IGNORECASE):
+        if not line:
+            continue
+        if not re.search(r"product", line, re.IGNORECASE):
+            continue
+        parts, d = _split(line)
+        if any(re.search(h, line, re.IGNORECASE) for h in SAMPLE_HEADERS):
             start = i
+            headers = [p.lower() for p in parts]
+            delim = d
             break
     if start is None:
         return []
-    header_line = lines[start]
-    delim = "|" if "|" in header_line else None
-    if delim:
-        headers = [h.strip().lower() for h in header_line.strip("|").split("|")]
-    else:
-        headers = re.split(r"\s{2,}", header_line.lower())
+
     sample_types = [h for h in headers[1:] if h]
     results = []
     for j in range(start + 1, len(lines)):
         row = lines[j]
         if not row:
             break
-        if delim:
-            parts = [p.strip() for p in row.strip("|").split("|")]
-        else:
-            parts = re.split(r"\s{2,}", row)
+        parts, _ = _split(row)
         if not parts:
             continue
         product = parts[0]
         for idx, stype in enumerate(sample_types, start=1):
             if idx < len(parts):
-                seal = parts[idx]
+                seal = parts[idx].strip()
                 if seal:
-                    results.append({"product": product, "sample_type": stype.title(), "seal_number": seal})
+                    results.append({
+                        "product": product,
+                        "sample_type": stype.title(),
+                        "seal_number": seal,
+                    })
     return results
 
 
