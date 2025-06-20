@@ -53,8 +53,8 @@
             <textarea name="bdr_json_{{ r.id }}" rows="10" cols="80">{{ r.bdr_json }}</textarea>
         </label>
         <button type="button" data-json-id="{{ r.id }}" onclick="adminGenerateJSON({{ r.id }})">Generate JSON</button>
-        <button type="button" onclick="extractBDR({{ r.id }})">Extract BDR Tables</button>
-        <button type="button" onclick="bdrTablesToJSON({{ r.id }})">BDR Tables → JSON</button>
+        <button type="button" onclick="extractBDR('{{ job_id }}', {{ r.id }})">Extract BDR Tables</button>
+        <button type="button" onclick="bdrTablesToJSON('{{ job_id }}', {{ r.id }})">BDR Tables → JSON</button>
         <button type="button" onclick="prettyPrintTextarea('json_{{ r.id }}')">Pretty Print JSON</button>
         <button type="button" onclick="prettyPrintTextarea('bdr_json_{{ r.id }}')">Pretty Print BDR JSON</button>
         <button type="button" onclick="openJSONEditor({{ r.id }})">Edit JSON</button>
