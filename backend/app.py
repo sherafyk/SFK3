@@ -378,13 +378,20 @@ def extract_bdr_route(job_id, req_id):
     filename = row[0]
     model = session.get('model', MODEL)
     image_path = os.path.join(UPLOAD_FOLDER, filename)
+    attachments = get_attachments(db_path)
+    if attachments:
+        # Use the most recent attachment when extracting BDR tables
+        att_path = os.path.join(UPLOAD_FOLDER, attachments[-1]["filename"])
+        if os.path.exists(att_path):
+            image_path = att_path
+            filename = attachments[-1]["filename"]
     try:
         output_text = call_openai(
             image_path,
             BDR_PROMPT,
             filename,
             model,
-            crop_top_fraction=0.33,
+            crop_top_fraction=0.40,
         )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
