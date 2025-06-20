@@ -125,12 +125,21 @@ def generate_prompt() -> str:
     )
 
 
-def call_openai(path: str, prompt: str, filename: str, model: str | None = None) -> str:
+def call_openai(
+    path: str,
+    prompt: str,
+    filename: str,
+    model: str | None = None,
+    crop_top_fraction: float | None = None,
+) -> str:
     if model is None:
         model = MODEL
     try:
         preprocess_image(path)
         with Image.open(path) as img:
+            if crop_top_fraction:
+                crop_height = int(img.height * crop_top_fraction)
+                img = img.crop((0, 0, img.width, crop_height))
             buf = io.BytesIO()
             img.save(buf, format="PNG")
             ext = "png"

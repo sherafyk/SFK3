@@ -367,7 +367,7 @@ def extract_bdr_route(job_id, req_id):
     model = session.get('model', MODEL)
     image_path = os.path.join(UPLOAD_FOLDER, filename)
     try:
-        output_text = call_openai(image_path, BDR_PROMPT, filename, model)
+        output_text = call_openai(image_path, BDR_PROMPT, filename, model, crop_top_fraction=0.33)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
