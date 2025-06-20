@@ -96,6 +96,8 @@ def test_job_detail_upgrades_schema(client, tmp_path):
     with sqlite3.connect(db_path) as conn_check:
         cols = [r[1] for r in conn_check.execute('PRAGMA table_info(requests)')]
     assert 'json' in cols
+    assert 'bdr_json' in cols
+    assert 'bdr_md' in cols
 
 
 def test_delete_job(client, tmp_path):

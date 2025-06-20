@@ -20,7 +20,8 @@ def init_db(path: str = DB_PATH):
                 prompt TEXT,
                 output TEXT,
                 json TEXT,
-                bdr_json TEXT
+                bdr_json TEXT,
+                bdr_md TEXT
             )"""
         )
         # Upgrade schema if ``json`` column is missing (for databases created
@@ -30,6 +31,8 @@ def init_db(path: str = DB_PATH):
             conn.execute("ALTER TABLE requests ADD COLUMN json TEXT")
         if "bdr_json" not in cols:
             conn.execute("ALTER TABLE requests ADD COLUMN bdr_json TEXT")
+        if "bdr_md" not in cols:
+            conn.execute("ALTER TABLE requests ADD COLUMN bdr_md TEXT")
         # Table for storing per-job metadata such as the job name
         conn.execute(
             "CREATE TABLE IF NOT EXISTS jobmeta (name TEXT)"
@@ -55,11 +58,12 @@ def log_request(
     db_path: str = DB_PATH,
     json_text: str = "",
     bdr_json_text: str = "",
+    bdr_md_text: str = "",
 ):
     """Insert a request row into the database at ``db_path``."""
     with get_db(db_path) as conn:
         conn.execute(
-            "INSERT INTO requests (filename, timestamp, ip, prompt, output, json, bdr_json) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO requests (filename, timestamp, ip, prompt, output, json, bdr_json, bdr_md) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 filename,
                 datetime.datetime.utcnow().isoformat(),
@@ -68,6 +72,7 @@ def log_request(
                 output,
                 json_text,
                 bdr_json_text,
+                bdr_md_text,
             ),
         )
 

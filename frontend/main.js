@@ -399,9 +399,38 @@ function extractBDR(id){
         alert(data.error);
         return;
       }
+      const txt = document.querySelector(`textarea[name='bdr_md_${id}']`);
+      if (txt) txt.value = data.bdr_md;
+      const htmlContainer = document.querySelector(`#bdr-html-${id}`);
+      if (htmlContainer) htmlContainer.innerHTML = data.html;
+      showStatus('BDR tables extracted');
+    })
+    .finally(() => {
+      stopProgress();
+    });
+}
+
+function bdrTablesToJSON(id){
+  startProgress();
+  const jobId = document.body.dataset.jobId;
+  const md = document.querySelector(`textarea[name='bdr_md_${id}']`).value;
+  fetch(`/bdr_json/${jobId}/${id}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCSRFToken()
+    },
+    body: JSON.stringify({markdown: md})
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error){
+        alert(data.error);
+        return;
+      }
       const txt = document.querySelector(`textarea[name='bdr_json_${id}']`);
       if (txt) txt.value = data.bdr_json;
-      showStatus('BDR data extracted');
+      showStatus('BDR JSON generated');
     })
     .finally(() => {
       stopProgress();
