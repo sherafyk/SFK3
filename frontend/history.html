@@ -2,10 +2,12 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Job History</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+<div class="container">
     <h2>Job History</h2>
     <a href="{{ url_for('upload') }}">Back</a>
     <table>
@@ -25,6 +27,7 @@
             <td>{{ job.ip }}</td>
         </tr>
         {% endfor %}
-    </table>
+</table>
+</div>
 </body>
 </html>

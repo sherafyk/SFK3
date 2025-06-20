@@ -2,10 +2,12 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Upload</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+<div class="container">
     <h2>Upload Images (Model: {{ model }})</h2>
     <a href="{{ url_for('history') }}">Admin</a> |
     <a href="{{ url_for('logout') }}">Logout</a>
@@ -41,6 +43,7 @@
     {% with messages = get_flashed_messages() %}
       {% if messages %}<div>{{ messages[0] }}</div>{% endif %}
     {% endwith %}
+</div>
 <script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
 </html>
