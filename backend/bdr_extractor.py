@@ -1,37 +1,35 @@
 import re
 from typing import Any, Dict, List
 
-# Prompt used when sending BDR images to the LLM.  It mirrors the template
-# defined in AGENTS.md and instructs the model to return key fields in a
-# structured format.
-BDR_PROMPT = """Extract the following standardized fields from this Bunker Delivery Receipt (BDR), regardless of exact header wording or layout. If a value is missing, return null.
+# Prompt used when sending BDR images to the LLM.  This simplified prompt focuses
+# only on key fields present near the top of the document and skips fuel sample
+# seal numbers.
+BDR_PROMPT = """Extract the following information from the top portion of this
+Bunker Delivery Receipt (BDR). If a value is missing, return null and ignore the
+rest of the document.
 
-Return your answer in the specified JSON format.
+Return JSON in this structure:
+{
+  "vessel_name": "",
+  "delivery_location": "",
+  "products": [
+    {
+      "product_name": "",
+      "weight_mt": null,
+      "gross_barrels": null,
+      "net_barrels": null,
+      "api_gravity": null,
+      "density_kgm3": null,
+      "viscosity": {"value": null, "unit": "", "measured_at": ""},
+      "delivery_temperature_f": null,
+      "flash_point_f": null,
+      "pour_point_f": null
+    }
+  ]
+}
 
-Required fields:
-- Vessel Name
-- Barge Name
-- Vessel Flag
-- Port Delivery Location
-- Date
-
-For each product delivered:
-- Product Name
-- Weight (metric tons)
-- Gross Barrels
-- Net Barrels
-- API Gravity
-- Density (kg/m³ or specify original units)
-- Viscosity (value, unit, temperature measured at)
-- Delivery Temperature (convert to °F if needed)
-- Flash Point (convert to °F if needed)
-- Pour Point (convert to °F if needed)
-- Sulfur Content (% by weight or m/m)
-
-List all fuel sample seal numbers in a table with: Product, Sample Type (e.g., Marpol, Supplier, Barge), and Seal Number.
-
-Convert all temperatures to °F. Split any combined cells into multiple entries. Omit unstructured or irrelevant data.
-"""
+Convert delivery, flash and pour temperatures to Fahrenheit. Output only the
+JSON."""
 
 
 def _find_value(text: str, patterns: List[str]) -> str:
@@ -88,10 +86,7 @@ def _parse_viscosity(value: str) -> Dict[str, Any]:
 
 _FIELD_PATTERNS = {
     "vessel_name": [r"vessel name", r"bunkers delivered to \(vessel name\)"],
-    "barge_name": [r"barge name", r"delivery company", r"barge"],
-    "vessel_flag": [r"vessel flag", r"flag"],
-    "port_delivery_location": [r"delivery location", r"port", r"terminal location"],
-    "date": [r"date", r"date of commencement of delivery"],
+    "delivery_location": [r"delivery location", r"port", r"terminal location"],
 }
 
 _PRODUCT_HEADER_MAP = {
@@ -105,7 +100,6 @@ _PRODUCT_HEADER_MAP = {
     "delivery_temperature": ["temp °c", "temp °f", "temp @ delivery", "temp"],
     "flash_point": ["flash °c", "flash °f", "flash point"],
     "pour_point": ["pour °c", "pour °f", "pour point"],
-    "sulfur_content_percent": ["sulfur % wt", "sulphur % (m/m)", "sulfur"],
 }
 
 
@@ -178,71 +172,18 @@ def _parse_products(text: str) -> List[Dict[str, Any]]:
                 "delivery_temperature_f": _temp_to_f(p.get("delivery_temperature", ""), header_map.get("delivery_temperature", "")),
                 "flash_point_f": _temp_to_f(p.get("flash_point", ""), header_map.get("flash_point", "")),
                 "pour_point_f": _temp_to_f(p.get("pour_point", ""), header_map.get("pour_point", "")),
-                "sulfur_content_percent": _to_float(p.get("sulfur_content_percent")),
             }
         )
     return result
 
-
-def _parse_seal_numbers(text: str) -> List[Dict[str, str]]:
-    SAMPLE_HEADERS = ["marpol", "sample", "supplier", "ship", "vessel", "barge"]
-
-    def _split(line: str):
-        d = "|" if "|" in line else None
-        if d:
-            return [p.strip() for p in line.strip("|").split("|")], d
-        return re.split(r"\s{2,}", line.strip()), d
-
-    lines = [ln.strip() for ln in text.splitlines()]
-    start = None
-    headers: List[str] = []
-    delim = None
-    for i, line in enumerate(lines):
-        if not line:
-            continue
-        if not re.search(r"product", line, re.IGNORECASE):
-            continue
-        parts, d = _split(line)
-        if any(re.search(h, line, re.IGNORECASE) for h in SAMPLE_HEADERS):
-            start = i
-            headers = [p.lower() for p in parts]
-            delim = d
-            break
-    if start is None:
-        return []
-
-    sample_types = [h for h in headers[1:] if h]
-    results = []
-    for j in range(start + 1, len(lines)):
-        row = lines[j]
-        if not row:
-            break
-        parts, _ = _split(row)
-        if not parts:
-            continue
-        product = parts[0]
-        for idx, stype in enumerate(sample_types, start=1):
-            if idx < len(parts):
-                seal = parts[idx].strip()
-                if seal:
-                    results.append({
-                        "product": product,
-                        "sample_type": stype.title(),
-                        "seal_number": seal,
-                    })
-    return results
 
 
 def extract_bdr(text: str) -> Dict[str, Any]:
     """Extract structured BDR data from raw text."""
     result = {
         "vessel_name": _find_value(text, _FIELD_PATTERNS["vessel_name"]),
-        "barge_name": _find_value(text, _FIELD_PATTERNS["barge_name"]),
-        "vessel_flag": _find_value(text, _FIELD_PATTERNS["vessel_flag"]),
-        "port_delivery_location": _find_value(text, _FIELD_PATTERNS["port_delivery_location"]),
-        "date": _find_value(text, _FIELD_PATTERNS["date"]),
+        "delivery_location": _find_value(text, _FIELD_PATTERNS["delivery_location"]),
         "products": _parse_products(text),
-        "sample_seal_numbers": _parse_seal_numbers(text),
     }
     return result
 
