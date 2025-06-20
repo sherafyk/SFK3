@@ -384,6 +384,30 @@ function adminGenerateJSON(id){
     });
 }
 
+function extractBDR(id){
+  startProgress();
+  const jobId = document.body.dataset.jobId;
+  fetch(`/extract_bdr/${jobId}/${id}`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCSRFToken()
+    }
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error){
+        alert(data.error);
+        return;
+      }
+      const txt = document.querySelector(`textarea[name='json_${id}']`);
+      if (txt) txt.value = data.json;
+      showStatus('BDR data extracted');
+    })
+    .finally(() => {
+      stopProgress();
+    });
+}
+
 function prettyPrintTextarea(name){
   const txt = document.querySelector(`textarea[name='${name}']`);
   if(!txt) return;

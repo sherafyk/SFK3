@@ -1,6 +1,38 @@
 import re
 from typing import Any, Dict, List
 
+# Prompt used when sending BDR images to the LLM.  It mirrors the template
+# defined in AGENTS.md and instructs the model to return key fields in a
+# structured format.
+BDR_PROMPT = """Extract the following standardized fields from this Bunker Delivery Receipt (BDR), regardless of exact header wording or layout. If a value is missing, return null.
+
+Return your answer in the specified JSON format.
+
+Required fields:
+- Vessel Name
+- Barge Name
+- Vessel Flag
+- Port Delivery Location
+- Date
+
+For each product delivered:
+- Product Name
+- Weight (metric tons)
+- Gross Barrels
+- Net Barrels
+- API Gravity
+- Density (kg/m³ or specify original units)
+- Viscosity (value, unit, temperature measured at)
+- Delivery Temperature (convert to °F if needed)
+- Flash Point (convert to °F if needed)
+- Pour Point (convert to °F if needed)
+- Sulfur Content (% by weight or m/m)
+
+List all fuel sample seal numbers in a table with: Product, Sample Type (e.g., Marpol, Supplier, Barge), and Seal Number.
+
+Convert all temperatures to °F. Split any combined cells into multiple entries. Omit unstructured or irrelevant data.
+"""
+
 
 def _find_value(text: str, patterns: List[str]) -> str:
     """Return the value after the first matching pattern."""
@@ -192,4 +224,32 @@ def extract_bdr(text: str) -> Dict[str, Any]:
         "sample_seal_numbers": _parse_seal_numbers(text),
     }
     return result
+
+
+def merge_bdr_json(existing: Dict[str, Any] | None, new: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge ``new`` BDR data into ``existing`` without overwriting values.
+
+    Fields already populated in ``existing`` are preserved.  Lists are extended
+    with any new items not already present.  ``existing`` may be ``None`` or an
+    invalid structure, in which case ``new`` is returned.
+    """
+
+    if not isinstance(existing, dict):
+        existing = {}
+
+    for key, val in new.items():
+        if isinstance(val, dict):
+            existing[key] = merge_bdr_json(existing.get(key), val)
+        elif isinstance(val, list):
+            cur = existing.get(key)
+            if not isinstance(cur, list):
+                existing[key] = val
+            else:
+                for item in val:
+                    if item not in cur:
+                        cur.append(item)
+        else:
+            if key not in existing or existing[key] in (None, "", []):
+                existing[key] = val
+    return existing
 

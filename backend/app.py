@@ -37,6 +37,7 @@ from backend.utils import (
     MAX_FILE_SIZE_MB,
     get_db,
 )
+from backend.bdr_extractor import BDR_PROMPT, extract_bdr, merge_bdr_json
 from backend.models import (
     init_db,
     log_request,
@@ -342,6 +343,50 @@ def update_json(job_id, req_id):
     with get_db(db_path) as conn:
         conn.execute('UPDATE requests SET json=? WHERE id=?', (json_text, req_id))
     return jsonify({'status': 'ok'})
+
+
+@app.route('/extract_bdr/<job_id>/<int:req_id>', methods=['POST'])
+def extract_bdr_route(job_id, req_id):
+    """Run the BDR extractor on the original image and save merged JSON."""
+    if not session.get('logged_in'):
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    db_path = job_db_path(job_id)
+    if not os.path.exists(db_path):
+        return jsonify({'error': 'Job not found'}), 404
+
+    init_db(db_path)
+    with get_db(db_path) as conn:
+        row = conn.execute(
+            'SELECT filename, json FROM requests WHERE id=?', (req_id,)
+        ).fetchone()
+    if not row:
+        return jsonify({'error': 'Request not found'}), 404
+
+    filename, existing_json = row
+    model = session.get('model', MODEL)
+    image_path = os.path.join(UPLOAD_FOLDER, filename)
+    try:
+        output_text = call_openai(image_path, BDR_PROMPT, filename, model)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    new_data = extract_bdr(output_text)
+    try:
+        existing_data = json.loads(existing_json) if existing_json else {}
+    except json.JSONDecodeError:
+        existing_data = {}
+
+    merged = merge_bdr_json(existing_data, new_data)
+    json_text = json.dumps(merged, indent=2)
+
+    with get_db(db_path) as conn:
+        conn.execute(
+            'UPDATE requests SET prompt=?, output=?, json=? WHERE id=?',
+            (BDR_PROMPT, output_text, json_text, req_id),
+        )
+
+    return jsonify({'json': json_text})
 
 
 @app.route('/uploads/<path:filename>')
