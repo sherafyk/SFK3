@@ -358,6 +358,7 @@ def update_json(job_id, req_id):
 
 
 @app.route('/extract_bdr/<job_id>/<int:req_id>', methods=['POST'])
+@limiter.limit(f"{RATE_LIMIT_PER_HOUR}/hour")
 def extract_bdr_route(job_id, req_id):
     """Extract BDR tables from the original image and store the markdown."""
     if not session.get('logged_in'):
@@ -405,6 +406,7 @@ def extract_bdr_route(job_id, req_id):
 
 
 @app.route('/bdr_json/<job_id>/<int:req_id>', methods=['POST'])
+@limiter.limit(f"{RATE_LIMIT_PER_HOUR}/hour")
 def bdr_json_route(job_id, req_id):
     """Convert stored BDR tables to JSON and save the result."""
     if not session.get('logged_in'):
